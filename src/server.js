@@ -55,7 +55,7 @@ pages.forEach(page => {
 
 // Route principale
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Lancer le serveur
