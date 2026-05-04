@@ -3,51 +3,55 @@ const router = express.Router();
 const db = require("../db/database");
 
 // GET /products
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        const rows = db.prepare("SELECT * FROM products").all();
-        res.json(rows);
+        const result = await db.execute("SELECT * FROM products");
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
 // GET /products/categories
-router.get("/categories", (req, res) => {
+router.get("/categories", async (req, res) => {
     try {
-        const categories = db.prepare(
+        const result = await db.execute(
             "SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != ''"
-        ).all();
-        res.json(categories);
+        );
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
 // GET /products/collections
-router.get("/collections", (req, res) => {
+router.get("/collections", async (req, res) => {
     try {
-        const collections = db.prepare("SELECT * FROM collections ORDER BY id").all();
-        res.json(collections);
+        const result = await db.execute("SELECT * FROM collections ORDER BY id");
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
 // GET /products/hero
-router.get("/hero", (req, res) => {
+router.get("/hero", async (req, res) => {
     try {
-        const images = db.prepare("SELECT * FROM hero_images ORDER BY position").all();
-        res.json(images);
+        const result = await db.execute("SELECT * FROM hero_images ORDER BY position");
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
 // GET /products/:id — EN DERNIER
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
-        const row = db.prepare("SELECT * FROM products WHERE id = ?").get(req.params.id);
+        const result = await db.execute({
+            sql: "SELECT * FROM products WHERE id = ?",
+            args: [req.params.id]
+        });
+        const row = result.rows[0];
         if (!row) return res.status(404).json({ error: "Produit introuvable" });
         res.json(row);
     } catch (err) {

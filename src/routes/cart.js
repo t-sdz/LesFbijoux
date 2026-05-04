@@ -9,41 +9,45 @@ function isAuthenticated(req, res, next) {
 }
 
 // GET /cart
-router.get("/", isAuthenticated, (req, res) => {
+router.get("/", isAuthenticated, async (req, res) => {
     try {
-        const rows = db.prepare(`
-            SELECT cart_items.id, cart_items.quantity,
+        const result = await db.execute({
+            sql: `SELECT cart_items.id, cart_items.quantity,
                    products.name, products.price, products.image
-            FROM cart_items
-            JOIN products ON cart_items.product_id = products.id
-            WHERE cart_items.user_id = ?
-        `).all(req.session.userId);
-        res.json(rows);
+                  FROM cart_items
+                  JOIN products ON cart_items.product_id = products.id
+                  WHERE cart_items.user_id = ?`,
+            args: [req.session.userId]
+        });
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
 // POST /cart
-router.post("/", isAuthenticated, (req, res) => {
+router.post("/", isAuthenticated, async (req, res) => {
     const { product_id } = req.body;
     if (!product_id)
         return res.status(400).json({ error: "product_id requis" });
 
     try {
-        const existing = db.prepare(
-            "SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?"
-        ).get(req.session.userId, product_id);
+        const existing = await db.execute({
+            sql: "SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?",
+            args: [req.session.userId, product_id]
+        });
 
-        if (existing) {
-            db.prepare(
-                "UPDATE cart_items SET quantity = quantity + 1 WHERE id = ?"
-            ).run(existing.id);
+        if (existing.rows[0]) {
+            await db.execute({
+                sql: "UPDATE cart_items SET quantity = quantity + 1 WHERE id = ?",
+                args: [existing.rows[0].id]
+            });
             res.json({ message: "Quantité mise à jour !" });
         } else {
-            db.prepare(
-                "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, 1)"
-            ).run(req.session.userId, product_id);
+            await db.execute({
+                sql: "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, 1)",
+                args: [req.session.userId, product_id]
+            });
             res.json({ message: "Produit ajouté au panier !" });
         }
     } catch (err) {
@@ -52,27 +56,43 @@ router.post("/", isAuthenticated, (req, res) => {
 });
 
 // DELETE /cart/:id
-router.delete("/:id", isAuthenticated, (req, res) => {
+router.delete("/:id", isAuthenticated, async (req, res) => {
     try {
-        db.prepare(
-            "DELETE FROM cart_items WHERE id = ? AND user_id = ?"
-        ).run(req.params.id, req.session.userId);
+        await db.execute({
+            sql: "DELETE FROM cart_items WHERE id = ? AND user_id = ?",
+            args: [req.params.id, req.session.userId]
+        });
         res.json({ message: "Article supprimé du panier !" });
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
 });
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// POST /cart/checkout — crée une session de paiement Stripe
+// DELETE /cart — vider tout le panier
+router.delete("/", isAuthenticated, async (req, res) => {
+    try {
+        await db.execute({
+            sql: "DELETE FROM cart_items WHERE user_id = ?",
+            args: [req.session.userId]
+        });
+        res.json({ message: "Panier vidé !" });
+    } catch (err) {
+        res.status(500).json({ error: "Erreur serveur" });
+    }
+});
+
+// POST /cart/checkout
 router.post("/checkout", isAuthenticated, async (req, res) => {
     try {
-        const items = db.prepare(`
-            SELECT cart_items.quantity, products.name, products.price
-            FROM cart_items
-            JOIN products ON cart_items.product_id = products.id
-            WHERE cart_items.user_id = ?
-        `).all(req.session.userId);
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const result = await db.execute({
+            sql: `SELECT cart_items.quantity, products.name, products.price
+                  FROM cart_items
+                  JOIN products ON cart_items.product_id = products.id
+                  WHERE cart_items.user_id = ?`,
+            args: [req.session.userId]
+        });
+        const items = result.rows;
 
         if (items.length === 0)
             return res.status(400).json({ error: "Panier vide" });
@@ -88,33 +108,14 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
                 quantity: item.quantity,
             })),
             mode: 'payment',
-            success_url: 'http://localhost:3000/cart.html?success=true',
-            cancel_url: 'http://localhost:3000/cart.html?cancelled=true',
+            success_url: process.env.BASE_URL + '/cart.html?success=true',
+            cancel_url: process.env.BASE_URL + '/cart.html?cancelled=true',
         });
 
         res.json({ url: session.url });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Erreur paiement" });
-    }
-});
-
-// DELETE /cart — vide tout le panier
-router.delete("/", isAuthenticated, (req, res) => {
-    try {
-        db.prepare("DELETE FROM cart_items WHERE user_id = ?").run(req.session.userId);
-        res.json({ message: "Panier vidé !" });
-    } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
-    }
-});
-
-router.delete("/", isAuthenticated, (req, res) => {
-    try {
-        db.prepare("DELETE FROM cart_items WHERE user_id = ?").run(req.session.userId);
-        res.json({ message: "Panier vidé !" });
-    } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
     }
 });
 

@@ -5,17 +5,18 @@ const db = require("../db/database");
 const router = express.Router();
 
 // Inscription
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password)
         return res.status(400).json({ error: "Email et mot de passe requis" });
 
     try {
         const hashed = bcrypt.hashSync(password, 10);
-        const result = db.prepare(
-            "INSERT INTO users (email, password, is_admin) VALUES (?, ?, 0)"
-        ).run(email, hashed);
-        res.json({ message: "Utilisateur créé", userId: result.lastInsertRowid });
+        const result = await db.execute({
+            sql: "INSERT INTO users (email, password, is_admin) VALUES (?, ?, 0)",
+            args: [email, hashed]
+        });
+        res.json({ message: "Utilisateur créé", userId: Number(result.lastInsertRowid) });
     } catch (err) {
         if (err.message.includes("UNIQUE"))
             return res.status(400).json({ error: "Email déjà utilisé" });
@@ -24,18 +25,22 @@ router.post("/register", (req, res) => {
 });
 
 // Connexion
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     try {
-        const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+        const result = await db.execute({
+            sql: "SELECT * FROM users WHERE email = ?",
+            args: [email]
+        });
+        const user = result.rows[0];
         if (!user) return res.status(400).json({ error: "Utilisateur introuvable" });
 
         const match = bcrypt.compareSync(password, user.password);
         if (!match) return res.status(400).json({ error: "Mot de passe incorrect" });
 
-        req.session.userId = user.id;
+        req.session.userId = Number(user.id);
         req.session.isAdmin = user.is_admin === 1;
-        res.json({ message: "Connecté", userId: user.id, isAdmin: user.is_admin === 1 });
+        res.json({ message: "Connecté", userId: Number(user.id), isAdmin: user.is_admin === 1 });
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
     }
@@ -46,15 +51,22 @@ router.post("/logout", (req, res) => {
     req.session.destroy(() => res.json({ message: "Déconnecté" }));
 });
 
-// GET /auth/me — retourne l'utilisateur connecté
-router.get("/me", (req, res) => {
+// GET /auth/me
+router.get("/me", async (req, res) => {
     if (!req.session.userId)
         return res.status(401).json({ error: "Non connecté" });
 
-    const user = db.prepare("SELECT id, email, is_admin FROM users WHERE id = ?").get(req.session.userId);
-    if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
-
-    res.json({ userId: user.id, email: user.email, isAdmin: user.is_admin === 1 });
+    try {
+        const result = await db.execute({
+            sql: "SELECT id, email, is_admin FROM users WHERE id = ?",
+            args: [req.session.userId]
+        });
+        const user = result.rows[0];
+        if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
+        res.json({ userId: Number(user.id), email: user.email, isAdmin: user.is_admin === 1 });
+    } catch (err) {
+        res.status(500).json({ error: "Erreur serveur" });
+    }
 });
 
 module.exports = router;
