@@ -49,13 +49,13 @@ app.use('/api/admin', adminRoutes);
 const pages = ['index', 'login', 'register', 'cart', 'admin', 'collection', 'boutique', 'produit','confirmation'];
 pages.forEach(page => {
     app.get(`/${page}.html`, (req, res) => {
-        res.sendFile(path.join(__dirname, `../public/pages/${page}.html`));
+        res.sendFile(path.join(__dirname, `../public/${page}.html`));
     });
 });
 
 // Route principale
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/pages/index.html'));
+    res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Lancer le serveur
