@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Boutique</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .boutique-container { max-width: 1100px; margin: 0 auto; padding: 120px 40px 60px; }
+    .filters {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;
+    }
+    .filter-btn {
+      padding: 10px 22px; border: 1px solid var(--border);
+      background: white; font-family: Inter, sans-serif;
+      font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+      cursor: pointer; transition: all 0.2s; color: var(--muted);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--gold); color: white; border-color: var(--gold);
+    }
+    .sort-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 30px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    }
+    .sort-bar p { font-family: Inter, sans-serif; font-size: 0.85rem; color: var(--muted); }
+    .sort-bar select {
+      padding: 8px 14px; border: 1px solid var(--border);
+      font-family: Inter, sans-serif; font-size: 0.82rem;
+      background: white; cursor: pointer; outline: none; color: var(--foreground);
+    }
+    .no-results {
+      text-align: center; padding: 60px 0;
+      font-family: Inter, sans-serif; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="boutique.html">Boutique</a>
+    <div class="nav-dropdown">
+      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+      <div class="nav-dropdown-menu" id="nav-categories"></div>
+    </div>
+    <a href="cart.html">🛍 <span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
+    <a href="login.html" id="nav-login">Connexion</a>
+    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
+  </div>
+</nav>
+
+<div class="boutique-container">
+  <p class="section-label">Notre sélection</p>
+  <h2 class="section-title">Boutique</h2>
+
+  <!-- FILTRES -->
+  <div class="filters" id="filters">
+    <button class="filter-btn active" onclick="filterProducts('tous', this)">Tous</button>
+  </div>
+
+  <!-- BARRE DE TRI -->
+  <div class="sort-bar">
+    <p id="result-count">Chargement...</p>
+    <select id="sort-select" onchange="sortProducts()">
+      <option value="default">Trier par défaut</option>
+      <option value="price-asc">Prix croissant</option>
+      <option value="price-desc">Prix décroissant</option>
+      <option value="name-asc">Nom A → Z</option>
+    </select>
+  </div>
+
+  <!-- GRILLE PRODUITS -->
+  <div class="products-grid" id="product-list"></div>
+</div>
+
+<style>
+  .nav-dropdown { position: relative; }
+  .nav-dropdown-menu {
+    display: none; position: absolute; top: 100%; left: 0;
+    background: white; border: 1px solid var(--border);
+    min-width: 160px; z-index: 100; padding: 8px 0;
+  }
+  .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a {
+    display: block; padding: 10px 20px;
+    font-size: 0.82rem; color: var(--muted);
+    text-decoration: none; font-family: Inter, sans-serif;
+  }
+  .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
+</style>
+
+<script>
+let allProducts = [];
+let currentCategory = 'tous';
+
+// Charge tous les produits
+async function loadProducts() {
+  const res = await fetch('/products');
+  allProducts = await res.json();
+  renderProducts(allProducts);
+  loadFilters();
+}
+
+// Charge les boutons de filtre dynamiquement
+async function loadFilters() {
+  const res = await fetch('/products/categories');
+  const categories = await res.json();
+  const filters = document.getElementById('filters');
+
+  categories.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.textContent = c.category.charAt(0).toUpperCase() + c.category.slice(1);
+    btn.onclick = () => filterProducts(c.category, btn);
+    filters.appendChild(btn);
+  });
+}
+
+// Filtre par catégorie
+function filterProducts(category, btn) {
+  currentCategory = category;
+
+  // Met à jour le bouton actif
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const filtered = category === 'tous'
+    ? allProducts
+    : allProducts.filter(p => p.category && p.category.toLowerCase() === category.toLowerCase());
+
+  renderProducts(filtered);
+}
+
+// Tri
+function sortProducts() {
+  const sort = document.getElementById('sort-select').value;
+  const filtered = currentCategory === 'tous'
+    ? [...allProducts]
+    : allProducts.filter(p => p.category && p.category.toLowerCase() === currentCategory.toLowerCase());
+
+  if (sort === 'price-asc') filtered.sort((a, b) => a.price - b.price);
+  if (sort === 'price-desc') filtered.sort((a, b) => b.price - a.price);
+  if (sort === 'name-asc') filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+  renderProducts(filtered);
+}
+
+// Affiche les produits
+function renderProducts(products) {
+  const container = document.getElementById('product-list');
+  document.getElementById('result-count').textContent = `${products.length} produit${products.length > 1 ? 's' : ''}`;
+
+  if (products.length === 0) {
+    container.innerHTML = `<div class="no-results"><p>Aucun produit dans cette catégorie.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = products.map(p => `
+    <div class="product-card" onclick="window.location.href='produit.html?id=${p.id}'">
+      <div class="product-card-image">
+        <img src="../images/${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;"
+          onerror="this.parentElement.innerHTML='💍'">
+      </div>
+      <h3>${p.name}</h3>
+      <p class="price">${p.price} €</p>
+      <button class="add-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Ajouter au panier</button>
+    </div>
+  `).join('');
+}
+
+async function addToCart(id) {
+  const res = await fetch('/cart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ product_id: id })
+  });
+  const data = await res.json();
+  alert(data.message || data.error);
+  updateCartCount();
+}
+
+// Navbar
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `
+      <a href="collection.html?category=${encodeURIComponent(c.category)}">
+        ${c.category.charAt(0).toUpperCase() + c.category.slice(1)}
+      </a>
+    `).join('');
+  } catch(e) {}
+}
+
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+async function updateCartCount() {
+  try {
+    const res = await fetch('/cart', { credentials: 'include' });
+    if (res.ok) {
+      const items = await res.json();
+      if (items.length > 0) {
+        const count = document.getElementById('cart-count');
+        if (count) {
+          count.style.display = 'inline';
+          count.textContent = items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+// Si on arrive depuis une collection (?category=xxx)
+function checkUrlCategory() {
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('category');
+  if (cat) {
+    setTimeout(() => {
+      const btns = document.querySelectorAll('.filter-btn');
+      btns.forEach(btn => {
+        if (btn.textContent.toLowerCase() === cat.toLowerCase()) {
+          filterProducts(cat, btn);
+        }
+      });
+    }, 300);
+  }
+}
+
+loadProducts();
+loadNavCategories();
+updateNav();
+updateCartCount();
+checkUrlCategory();
+</script>
+
+</body>
+</html>

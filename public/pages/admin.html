@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .admin-container { max-width: 1200px; margin: 0 auto; padding: 100px 40px 60px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 40px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .tab { padding: 12px 24px; font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: Inter, sans-serif; background: none; border: none; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .stat-card { background: white; border: 1px solid var(--border); padding: 30px; text-align: center; }
+    .stat-card h3 { font-size: 2.5rem; color: var(--gold); margin-bottom: 8px; }
+    .stat-card p { font-size: 0.8rem; color: var(--muted); font-family: Inter, sans-serif; text-transform: uppercase; letter-spacing: 0.1em; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th { padding: 14px 16px; text-align: left; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-family: Inter, sans-serif; border-bottom: 2px solid var(--border); color: var(--muted); }
+    td { padding: 14px 16px; font-size: 0.88rem; border-bottom: 1px solid var(--border); font-family: Inter, sans-serif; }
+    tr:hover td { background: var(--cream); }
+    .btn-gold { padding: 10px 20px; background: var(--gold); color: white; border: none; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; font-family: Inter, sans-serif; }
+    .btn-gold:hover { background: var(--gold-dark); }
+    .btn-danger { padding: 8px 14px; background: none; border: 1px solid #e74c3c; color: #e74c3c; font-size: 0.7rem; cursor: pointer; font-family: Inter, sans-serif; }
+    .btn-danger:hover { background: #e74c3c; color: white; }
+    .btn-edit { padding: 8px 14px; background: none; border: 1px solid var(--gold); color: var(--gold); font-size: 0.7rem; cursor: pointer; font-family: Inter, sans-serif; margin-right: 6px; }
+    .btn-edit:hover { background: var(--gold); color: white; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-family: Inter, sans-serif; margin-bottom: 6px; }
+    .form-group input, .form-group select { padding: 12px 16px; border: 1px solid var(--border); font-family: Inter, sans-serif; font-size: 0.88rem; width: 100%; outline: none; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-grid input { padding: 12px 16px; border: 1px solid var(--border); font-family: Inter, sans-serif; font-size: 0.88rem; width: 100%; outline: none; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-box { background: white; padding: 40px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
+    .modal-box h3 { margin-bottom: 24px; }
+    .top-product { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .top-product-bar { height: 4px; background: var(--gold); margin-top: 6px; border-radius: 2px; }
+    .collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+    .collection-item { background: white; border: 1px solid var(--border); overflow: hidden; }
+    .collection-item img { width: 100%; height: 120px; object-fit: cover; display: block; }
+    .collection-item-info { padding: 12px 16px; }
+    .collection-item-info p { font-family: Inter, sans-serif; font-size: 0.88rem; margin-bottom: 8px; font-weight: 500; }
+    .collection-item-actions { display: flex; gap: 6px; }
+    .products-selector { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); padding: 8px; }
+    .product-checkbox { display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; font-family: Inter, sans-serif; font-size: 0.85rem; transition: background 0.2s; }
+    .product-checkbox:hover { background: var(--cream); }
+    .product-checkbox input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold); flex-shrink: 0; }
+    .product-checkbox img { width: 36px; height: 36px; object-fit: cover; flex-shrink: 0; }
+    .product-checkbox span { flex: 1; }
+    .product-checkbox .price { color: var(--muted); font-size: 0.78rem; }
+
+    /* ── HERO SECTION ── */
+    .hero-layout { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
+    .hero-preview-wrap { position: sticky; top: 100px; }
+    .hero-preview-label { font-family: Inter, sans-serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .hero-preview { width: 100%; aspect-ratio: 16/9; background: #1f1a14; position: relative; overflow: hidden; border: 1px solid var(--border); }
+    .hero-preview-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 2px; }
+    .preview-cell { overflow: hidden; position: relative; background: rgba(249,246,241,0.05); border: 1px solid rgba(249,246,241,0.04); cursor: pointer; transition: all 0.3s; }
+    .preview-cell img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; display: block; transition: opacity 0.3s; }
+    .preview-cell:hover img { opacity: 1; }
+    .preview-cell.selected { outline: 2px solid var(--gold); outline-offset: -2px; }
+    .preview-cell.selected img { opacity: 1; }
+    .preview-fullscreen { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+    .preview-overlay { position: absolute; inset: 0; background: rgba(31,26,20,0.45); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+    .hero-cards { display: flex; flex-direction: column; gap: 12px; }
+    .hero-drag-card { background: white; border: 1px solid var(--border); overflow: hidden; }
+    .hero-drag-card.selected-card { border-color: var(--gold); }
+    .hero-card-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .hero-card-header span { font-family: Inter, sans-serif; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+    .hero-card-header small { font-family: Inter, sans-serif; font-size: 0.7rem; color: var(--muted); }
+    .hero-card-body { display: none; }
+    .hero-card-body.open { display: block; }
+    .drag-section-label { font-family: Inter, sans-serif; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 10px 12px 4px; }
+    .drag-vp { width: 100%; aspect-ratio: 2/1; position: relative; overflow: hidden; cursor: grab; background: var(--cream-dark); user-select: none; }
+    .drag-vp[data-type="fullscreen"] { aspect-ratio: 16/9; }
+    .drag-vp.dragging { cursor: grabbing; }
+    .drag-vp img { position: absolute; width: 150%; height: 150%; object-fit: cover; pointer-events: none; }
+    .drag-vp-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 2; opacity: 1; transition: opacity 0.3s; }
+    .drag-vp:hover .drag-vp-hint { opacity: 0; }
+    .drag-vp-hint span { background: rgba(0,0,0,0.5); color: white; font-size: 0.68rem; padding: 4px 10px; border-radius: 20px; font-family: Inter, sans-serif; }
+    .drag-coords { padding: 6px 12px; display: flex; gap: 6px; border-top: 1px solid var(--border); background: var(--cream); }
+    .drag-coord { font-family: Inter, sans-serif; font-size: 0.7rem; color: var(--muted); background: white; border: 1px solid var(--border); padding: 2px 8px; }
+    .hero-card-controls { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); }
+    .hero-card-controls label { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-family: Inter, sans-serif; margin-bottom: 2px; display: block; }
+    .hero-card-controls input[type=file] { width: 100%; font-size: 0.72rem; font-family: Inter, sans-serif; }
+    .hero-card-controls select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); font-family: Inter, sans-serif; font-size: 0.78rem; outline: none; background: white; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html">← Boutique</a>
+    <span style="font-size:0.8rem; color:var(--muted); font-family:Inter,sans-serif;">Panel Admin</span>
+  </div>
+</nav>
+
+<div class="admin-container">
+  <p class="section-label">Tableau de bord</p>
+  <h2 class="section-title" style="margin-bottom:40px;">Administration</h2>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('stats', event)">Statistiques</button>
+    <button class="tab" onclick="showTab('products', event)">Produits</button>
+    <button class="tab" onclick="showTab('carts', event)">Paniers</button>
+    <button class="tab" onclick="showTab('collections', event)">Collections</button>
+    <button class="tab" onclick="showTab('hero', event)">Images Hero</button>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats" class="tab-content active">
+    <div class="stat-grid">
+      <div class="stat-card"><h3 id="stat-users">—</h3><p>Utilisateurs</p></div>
+      <div class="stat-card"><h3 id="stat-products">—</h3><p>Produits</p></div>
+      <div class="stat-card"><h3 id="stat-carts">—</h3><p>Articles en panier</p></div>
+    </div>
+    <h3 style="margin-bottom:20px;">🏆 Produits les plus ajoutés au panier</h3>
+    <div id="top-products"></div>
+  </div>
+
+  <!-- PRODUITS -->
+  <div id="tab-products" class="tab-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h3>Tous les produits</h3>
+      <button class="btn-gold" onclick="openAddProductModal()">+ Ajouter un produit</button>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>Actions</th></tr></thead>
+      <tbody id="products-table"></tbody>
+    </table>
+  </div>
+
+  <!-- PANIERS -->
+  <div id="tab-carts" class="tab-content">
+    <h3 style="margin-bottom:24px;">Paniers en cours</h3>
+    <table>
+      <thead><tr><th>Utilisateur</th><th>Produit</th><th>Quantité</th><th>Prix unitaire</th><th>Sous-total</th></tr></thead>
+      <tbody id="carts-table"></tbody>
+    </table>
+  </div>
+
+  <!-- COLLECTIONS -->
+  <div id="tab-collections" class="tab-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h3>Collections</h3>
+      <button class="btn-gold" onclick="openAddCollectionModal()">+ Nouvelle collection</button>
+    </div>
+    <div class="collection-grid" id="collections-grid"></div>
+  </div>
+
+  <!-- HERO -->
+  <div id="tab-hero" class="tab-content">
+    <h3 style="margin-bottom:8px;">Images de la page d'accueil</h3>
+    <p style="font-family:Inter,sans-serif; font-size:0.85rem; color:var(--muted); margin-bottom:24px;">
+      Cliquez sur une case dans l'aperçu pour la modifier. Glissez pour cadrer.
+    </p>
+    <div class="hero-layout">
+      <!-- COLONNE GAUCHE : cartes de config -->
+      <div class="hero-cards" id="hero-cards"></div>
+      <!-- COLONNE DROITE : aperçu sticky -->
+      <div class="hero-preview-wrap">
+        <p class="hero-preview-label">Aperçu en temps réel</p>
+        <div class="hero-preview" id="hero-preview">
+          <div class="preview-fullscreen" id="preview-fullscreen"></div>
+          <div class="preview-overlay" id="preview-overlay"></div>
+          <div class="hero-preview-grid" id="hero-preview-grid"></div>
+        </div>
+        <p style="font-family:Inter,sans-serif; font-size:0.72rem; color:var(--muted); margin-top:8px; text-align:center;">
+          Survolez une case pour voir le plein écran
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PRODUIT -->
+<div class="modal" id="product-modal">
+  <div class="modal-box">
+    <h3 id="modal-product-title">Ajouter un produit</h3>
+    <input type="hidden" id="edit-id">
+    <div class="form-group"><label>Nom</label><input type="text" id="input-name" placeholder="Ex: Bague Lumière"></div>
+    <div class="form-group"><label>Description</label><input type="text" id="input-description" placeholder="Description du produit"></div>
+    <div class="form-grid">
+      <div>
+        <label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:Inter,sans-serif;margin-bottom:6px;">Prix (€)</label>
+        <input type="number" id="input-price" placeholder="49.99" step="0.01">
+      </div>
+      <div>
+        <label style="display:block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);font-family:Inter,sans-serif;margin-bottom:6px;">Catégorie</label>
+        <input type="text" id="input-category" placeholder="bagues, colliers...">
+      </div>
+    </div>
+    <div class="form-group"><label>Image du produit</label><input type="file" id="input-image" accept="image/*"></div>
+    <div style="display:flex;gap:12px;margin-top:24px;">
+      <button class="btn-gold" onclick="saveProduct()" style="flex:1;">Sauvegarder</button>
+      <button onclick="closeModal('product-modal')" style="padding:10px 20px;background:none;border:1px solid var(--border);cursor:pointer;font-family:Inter,sans-serif;font-size:0.8rem;">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COLLECTION -->
+<div class="modal" id="collection-modal">
+  <div class="modal-box">
+    <h3 id="modal-collection-title">Nouvelle collection</h3>
+    <input type="hidden" id="edit-collection-id">
+    <div class="form-group"><label>Nom de la collection</label><input type="text" id="input-collection-name" placeholder="Ex: Été 2026"></div>
+    <div class="form-group"><label>Image de la collection</label><input type="file" id="input-collection-image" accept="image/*"></div>
+    <div class="form-group">
+      <label>Produits dans cette collection</label>
+      <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Les produits cochés seront assignés à cette collection.</p>
+      <div class="products-selector" id="products-selector"><p style="font-family:Inter,sans-serif;font-size:0.82rem;color:var(--muted);padding:8px;">Chargement...</p></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:24px;">
+      <button class="btn-gold" onclick="saveCollection()" style="flex:1;">Sauvegarder</button>
+      <button onclick="closeModal('collection-modal')" style="padding:10px 20px;background:none;border:1px solid var(--border);cursor:pointer;font-family:Inter,sans-serif;font-size:0.8rem;">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(name, event) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'stats') loadStats();
+  if (name === 'products') loadProducts();
+  if (name === 'carts') loadCarts();
+  if (name === 'collections') loadCollections();
+  if (name === 'hero') loadHero();
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  const res = await fetch('/api/admin/stats', { credentials: 'include' });
+  if (res.status === 401) { alert('Connectez-vous !'); window.location.href = 'login.html'; return; }
+  if (res.status === 403) { alert('Accès refusé.'); window.location.href = 'index.html'; return; }
+  const data = await res.json();
+  document.getElementById('stat-users').textContent = data.totalUsers;
+  document.getElementById('stat-products').textContent = data.totalProducts;
+  document.getElementById('stat-carts').textContent = data.totalCarts;
+  const max = data.topProducts[0]?.total || 1;
+  document.getElementById('top-products').innerHTML = data.topProducts.length === 0
+    ? '<p style="color:var(--muted);font-family:Inter,sans-serif;">Aucun produit en panier.</p>'
+    : data.topProducts.map(p => `
+        <div class="top-product">
+          <div style="flex:1;"><p style="font-family:'Playfair Display',serif;">${p.name}</p>
+          <div class="top-product-bar" style="width:${(p.total/max)*100}%"></div></div>
+          <span style="font-size:1.2rem;font-family:'Playfair Display',serif;color:var(--gold);margin-left:20px;">${p.total} ajouts</span>
+        </div>`).join('');
+}
+
+// ── PRODUITS ──────────────────────────────────────────────────────────────────
+async function loadProducts() {
+  const res = await fetch('/api/admin/products', { credentials: 'include' });
+  const products = await res.json();
+  document.getElementById('products-table').innerHTML = products.map(p => `
+    <tr>
+      <td>${p.id}</td>
+      <td><img src="../images/${p.image}" style="width:50px;height:50px;object-fit:cover;" onerror="this.style.display='none'"></td>
+      <td>${p.name}</td><td>${p.category || '—'}</td><td>${p.price} €</td>
+      <td>
+        <button class="btn-edit" onclick="openEditProductModal(${p.id},'${p.name.replace(/'/g,"\\'")}','${(p.description||'').replace(/'/g,"\\'")}',${p.price},'${p.category||''}')">Modifier</button>
+        <button class="btn-danger" onclick="deleteProduct(${p.id})">Supprimer</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Supprimer ce produit ?')) return;
+  await fetch('/api/admin/products/' + id, { method: 'DELETE', credentials: 'include' });
+  loadProducts();
+}
+
+function openAddProductModal() {
+  document.getElementById('modal-product-title').textContent = 'Ajouter un produit';
+  ['edit-id','input-name','input-description','input-price','input-category','input-image'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('product-modal').classList.add('open');
+}
+
+function openEditProductModal(id, name, description, price, category) {
+  document.getElementById('modal-product-title').textContent = 'Modifier le produit';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('input-name').value = name;
+  document.getElementById('input-description').value = description;
+  document.getElementById('input-price').value = price;
+  document.getElementById('input-category').value = category;
+  document.getElementById('input-image').value = '';
+  document.getElementById('product-modal').classList.add('open');
+}
+
+async function saveProduct() {
+  const id = document.getElementById('edit-id').value;
+  const name = document.getElementById('input-name').value;
+  const price = document.getElementById('input-price').value;
+  if (!name || !price) { alert('Nom et prix sont obligatoires !'); return; }
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('description', document.getElementById('input-description').value);
+  formData.append('price', price);
+  formData.append('category', document.getElementById('input-category').value);
+  const imageFile = document.getElementById('input-image').files[0];
+  if (imageFile) formData.append('image', imageFile);
+  const res = await fetch(id ? '/api/admin/products/' + id : '/api/admin/products', { method: id ? 'PUT' : 'POST', credentials: 'include', body: formData });
+  const data = await res.json();
+  alert(data.message || data.error);
+  closeModal('product-modal');
+  loadProducts();
+}
+
+// ── PANIERS ───────────────────────────────────────────────────────────────────
+async function loadCarts() {
+  const res = await fetch('/api/admin/carts', { credentials: 'include' });
+  const carts = await res.json();
+  document.getElementById('carts-table').innerHTML = carts.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);">Aucun panier en cours.</td></tr>'
+    : carts.map(c => `<tr><td>${c.email}</td><td>${c.name}</td><td>${c.quantity}</td><td>${c.price} €</td><td>${(c.price*c.quantity).toFixed(2)} €</td></tr>`).join('');
+}
+
+// ── COLLECTIONS ───────────────────────────────────────────────────────────────
+async function loadCollections() {
+  const res = await fetch('/api/admin/collections', { credentials: 'include' });
+  const collections = await res.json();
+  document.getElementById('collections-grid').innerHTML = collections.length === 0
+    ? '<p style="font-family:Inter,sans-serif;color:var(--muted);">Aucune collection.</p>'
+    : collections.map(c => `
+        <div class="collection-item">
+          <img src="../images/${c.image}" alt="${c.name}" onerror="this.style.background='var(--cream-dark)';this.style.minHeight='120px';">
+          <div class="collection-item-info">
+            <p>${c.name.charAt(0).toUpperCase()+c.name.slice(1)}</p>
+            <div class="collection-item-actions">
+              <button class="btn-edit" onclick="openEditCollectionModal(${c.id},'${c.name.replace(/'/g,"\\'")}')">Modifier</button>
+              <button class="btn-danger" onclick="deleteCollection(${c.id})">Supprimer</button>
+            </div>
+          </div>
+        </div>`).join('');
+}
+
+async function openAddCollectionModal() {
+  document.getElementById('modal-collection-title').textContent = 'Nouvelle collection';
+  document.getElementById('edit-collection-id').value = '';
+  document.getElementById('input-collection-name').value = '';
+  document.getElementById('input-collection-image').value = '';
+  await loadProductsSelector('');
+  document.getElementById('collection-modal').classList.add('open');
+}
+
+async function openEditCollectionModal(id, name) {
+  document.getElementById('modal-collection-title').textContent = 'Modifier la collection';
+  document.getElementById('edit-collection-id').value = id;
+  document.getElementById('input-collection-name').value = name;
+  document.getElementById('input-collection-image').value = '';
+  await loadProductsSelector(name);
+  document.getElementById('collection-modal').classList.add('open');
+}
+
+async function loadProductsSelector(currentCollection) {
+  const res = await fetch('/api/admin/products', { credentials: 'include' });
+  const products = await res.json();
+  const selector = document.getElementById('products-selector');
+  if (products.length === 0) { selector.innerHTML = '<p style="font-family:Inter,sans-serif;font-size:0.82rem;color:var(--muted);padding:8px;">Aucun produit disponible.</p>'; return; }
+  selector.innerHTML = products.map(p => `
+    <label class="product-checkbox">
+      <input type="checkbox" value="${p.id}" data-name="${p.name.replace(/"/g,'&quot;')}"
+        ${p.category && p.category.toLowerCase() === currentCollection.toLowerCase() ? 'checked' : ''}>
+      <img src="../images/${p.image}" onerror="this.style.display='none'">
+      <span>${p.name}</span><span class="price">${p.price} €</span>
+    </label>`).join('');
+}
+
+async function saveCollection() {
+  const id = document.getElementById('edit-collection-id').value;
+  const name = document.getElementById('input-collection-name').value.trim();
+  if (!name) { alert('Nom de collection requis !'); return; }
+  const formData = new FormData();
+  formData.append('name', name);
+  const imageFile = document.getElementById('input-collection-image').files[0];
+  if (imageFile) formData.append('image', imageFile);
+  const res = await fetch(id ? '/api/admin/collections/'+id : '/api/admin/collections', { method: id ? 'PUT' : 'POST', credentials: 'include', body: formData });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  const checkboxes = document.querySelectorAll('#products-selector input[type=checkbox]');
+  await Promise.all([...checkboxes].map(cb => fetch('/api/admin/products/'+cb.value+'/category', {
+    method: 'PATCH', headers: {'Content-Type':'application/json'}, credentials: 'include',
+    body: JSON.stringify({ category: cb.checked ? name : null })
+  })));
+  alert(data.message || 'Collection sauvegardée !');
+  closeModal('collection-modal');
+  loadCollections();
+}
+
+async function deleteCollection(id) {
+  if (!confirm('Supprimer cette collection ?')) return;
+  await fetch('/api/admin/collections/' + id, { method: 'DELETE', credentials: 'include' });
+  loadCollections();
+}
+
+// ── HERO ──────────────────────────────────────────────────────────────────────
+const dragState = {};
+
+async function loadHero() {
+  const res = await fetch('/api/admin/hero', { credentials: 'include' });
+  const images = await res.json();
+
+  // Construire les cartes de config
+  const cardsEl = document.getElementById('hero-cards');
+  const previewGridEl = document.getElementById('hero-preview-grid');
+  cardsEl.innerHTML = '';
+  previewGridEl.innerHTML = '';
+
+  images.forEach((img, idx) => {
+    // État drag pour cadrage dans la case
+    const px = isNaN(parseFloat(img.position_x)) ? 50 : parseFloat(img.position_x);
+    const py = isNaN(parseFloat(img.position_y)) ? 50 : parseFloat(img.position_y);
+    const fx = isNaN(parseFloat(img.fullscreen_x)) ? 50 : parseFloat(img.fullscreen_x);
+    const fy = isNaN(parseFloat(img.fullscreen_y)) ? 50 : parseFloat(img.fullscreen_y);
+
+    dragState['cell-'+img.id]       = { x: px, y: py, dragging: false, startX: 0, startY: 0, startPx: px, startPy: py };
+    dragState['fullscreen-'+img.id] = { x: fx, y: fy, dragging: false, startX: 0, startY: 0, startPx: fx, startPy: fy };
+
+    // Carte de configuration
+    const card = document.createElement('div');
+    card.className = 'hero-drag-card';
+    card.id = 'card-' + img.id;
+    card.innerHTML = `
+      <div class="hero-card-header" onclick="toggleCard(${img.id})">
+        <span>Case ${img.position}</span>
+        <small id="card-label-${img.id}">${img.image}</small>
+      </div>
+      <div class="hero-card-body" id="card-body-${img.id}">
+        <div class="drag-section-label">Cadrage dans la case</div>
+        <div class="drag-vp" id="cvp-${img.id}" data-type="cell" data-id="${img.id}">
+          <img id="cimg-${img.id}" src="../images/${img.image}" onerror="this.style.display='none'">
+          <div class="drag-vp-hint"><span>Glisser pour cadrer</span></div>
+        </div>
+        <div class="drag-coords">
+          <div class="drag-coord">X: <strong id="cxv-${img.id}">${Math.round(px)}</strong>%</div>
+          <div class="drag-coord">Y: <strong id="cyv-${img.id}">${Math.round(py)}</strong>%</div>
+        </div>
+
+        <div class="drag-section-label">Cadrage plein écran (au survol)</div>
+        <div class="drag-vp" id="fvp-${img.id}" data-type="fullscreen" data-id="${img.id}">
+          <img id="fimg-${img.id}" src="../images/${img.image}" onerror="this.style.display='none'">
+          <div class="drag-vp-hint"><span>Glisser pour cadrer</span></div>
+        </div>
+        <div class="drag-coords">
+          <div class="drag-coord">X: <strong id="fxv-${img.id}">${Math.round(fx)}</strong>%</div>
+          <div class="drag-coord">Y: <strong id="fyv-${img.id}">${Math.round(fy)}</strong>%</div>
+        </div>
+
+        <div class="hero-card-controls">
+          <div>
+            <label>Nouvelle image</label>
+            <input type="file" accept="image/*" id="hf-${img.id}" onchange="previewHero(${img.id}, this)">
+          </div>
+          <div>
+            <label>Taille dans la grille</label>
+            <select id="hs-${img.id}">
+              <option value="1x1" ${(img.size||'1x1')==='1x1'?'selected':''}>Normal (1×1)</option>
+              <option value="2x1" ${img.size==='2x1'?'selected':''}>Large (2 colonnes)</option>
+              <option value="1x2" ${img.size==='1x2'?'selected':''}>Haut (2 lignes)</option>
+              <option value="2x2" ${img.size==='2x2'?'selected':''}>Grande (2×2)</option>
+            </select>
+          </div>
+          <button class="btn-gold" style="width:100%;font-size:0.65rem;" onclick="saveHeroImage(${img.id})">
+            Sauvegarder la case ${img.position}
+          </button>
+        </div>
+      </div>
+    `;
+    cardsEl.appendChild(card);
+
+    // Case dans l'aperçu
+    const cell = document.createElement('div');
+    cell.className = 'preview-cell';
+    cell.id = 'pcell-' + img.id;
+    if (img.size === '2x1') cell.style.gridColumn = 'span 2';
+    if (img.size === '1x2') cell.style.gridRow = 'span 2';
+    if (img.size === '2x2') { cell.style.gridColumn = 'span 2'; cell.style.gridRow = 'span 2'; }
+    const objPos = px + '% ' + py + '%';
+    cell.innerHTML = '<img src="../images/' + img.image + '" style="object-position:' + objPos + '" onerror="this.style.display=\'none\'">';
+
+    cell.addEventListener('click', () => toggleCard(img.id));
+
+    // Survol → plein écran dans l'aperçu
+    cell.addEventListener('mouseenter', () => {
+      const s = dragState['fullscreen-' + img.id];
+      const fpos = s.x + '% ' + s.y + '%';
+      const fullBg = document.getElementById('preview-fullscreen');
+      const overlay = document.getElementById('preview-overlay');
+      fullBg.style.backgroundImage = "url('../images/" + img.image + "')";
+      fullBg.style.backgroundPosition = fpos;
+      fullBg.style.opacity = '1';
+      overlay.style.opacity = '1';
+    });
+    cell.addEventListener('mouseleave', () => {
+      document.getElementById('preview-fullscreen').style.opacity = '0';
+      document.getElementById('preview-overlay').style.opacity = '0';
+    });
+
+    previewGridEl.appendChild(cell);
+
+    // Init drag
+    initDragVp('cvp-' + img.id, 'cell', img.id);
+    initDragVp('fvp-' + img.id, 'fullscreen', img.id);
+    applyDragPos('cell', img.id);
+    applyDragPos('fullscreen', img.id);
+  });
+}
+
+function toggleCard(id) {
+  const body = document.getElementById('card-body-' + id);
+  const card = document.getElementById('card-' + id);
+  const isOpen = body.classList.contains('open');
+  // Fermer toutes les cartes
+  document.querySelectorAll('.hero-card-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.hero-drag-card').forEach(c => c.classList.remove('selected-card'));
+  document.querySelectorAll('.preview-cell').forEach(c => c.classList.remove('selected'));
+  if (!isOpen) {
+    body.classList.add('open');
+    card.classList.add('selected-card');
+    const pcell = document.getElementById('pcell-' + id);
+    if (pcell) pcell.classList.add('selected');
+  }
+}
+
+function applyDragPos(type, id) {
+  const key = type + '-' + id;
+  const s = dragState[key];
+  if (!s) return;
+  const prefix = type === 'cell' ? 'c' : 'f';
+  const img = document.getElementById(prefix + 'img-' + id);
+  if (img) {
+    const ox = s.x - 50;
+    const oy = s.y - 50;
+    img.style.left = (-ox * 0.5) + '%';
+    img.style.top  = (-oy * 0.5) + '%';
+  }
+  const xEl = document.getElementById(prefix + 'xv-' + id);
+  const yEl = document.getElementById(prefix + 'yv-' + id);
+  if (xEl) xEl.textContent = Math.round(s.x);
+  if (yEl) yEl.textContent = Math.round(s.y);
+
+  // Mettre à jour l'aperçu si c'est le cadrage de la case
+  if (type === 'cell') {
+    const pcellImg = document.querySelector('#pcell-' + id + ' img');
+    if (pcellImg) pcellImg.style.objectPosition = s.x + '% ' + s.y + '%';
+  }
+}
+
+function initDragVp(vpId, type, imgId) {
+  const vp = document.getElementById(vpId);
+  if (!vp) return;
+  const key = type + '-' + imgId;
+  const s = dragState[key];
+
+  vp.addEventListener('mousedown', e => {
+    s.dragging = true;
+    s.startX = e.clientX; s.startY = e.clientY;
+    s.startPx = s.x; s.startPy = s.y;
+    vp.classList.add('dragging');
+    e.preventDefault();
+  });
+  vp.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    s.dragging = true;
+    s.startX = t.clientX; s.startY = t.clientY;
+    s.startPx = s.x; s.startPy = s.y;
+  }, { passive: true });
+}
+
+document.addEventListener('mousemove', e => {
+  Object.keys(dragState).forEach(key => {
+    const s = dragState[key];
+    if (!s.dragging) return;
+    const [type, id] = key.split('-');
+    const prefix = type === 'cell' ? 'c' : 'f';
+    const vp = document.getElementById(prefix + 'vp-' + id);
+    if (!vp) return;
+    const dx = (e.clientX - s.startX) / vp.offsetWidth * 100;
+    const dy = (e.clientY - s.startY) / vp.offsetHeight * 100;
+    s.x = Math.max(0, Math.min(100, s.startPx - dx));
+    s.y = Math.max(0, Math.min(100, s.startPy - dy));
+    applyDragPos(type, id);
+  });
+});
+
+document.addEventListener('touchmove', e => {
+  Object.keys(dragState).forEach(key => {
+    const s = dragState[key];
+    if (!s.dragging) return;
+    const [type, id] = key.split('-');
+    const prefix = type === 'cell' ? 'c' : 'f';
+    const vp = document.getElementById(prefix + 'vp-' + id);
+    if (!vp) return;
+    const t = e.touches[0];
+    const dx = (t.clientX - s.startX) / vp.offsetWidth * 100;
+    const dy = (t.clientY - s.startY) / vp.offsetHeight * 100;
+    s.x = Math.max(0, Math.min(100, s.startPx - dx));
+    s.y = Math.max(0, Math.min(100, s.startPy - dy));
+    applyDragPos(type, id);
+  });
+}, { passive: true });
+
+document.addEventListener('mouseup', () => {
+  Object.keys(dragState).forEach(key => {
+    if (!dragState[key].dragging) return;
+    dragState[key].dragging = false;
+    const [type, id] = key.split('-');
+    const prefix = type === 'cell' ? 'c' : 'f';
+    const vp = document.getElementById(prefix + 'vp-' + id);
+    if (vp) vp.classList.remove('dragging');
+  });
+});
+document.addEventListener('touchend', () => {
+  Object.keys(dragState).forEach(key => { dragState[key].dragging = false; });
+});
+
+function previewHero(id, input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    ['cimg-','fimg-'].forEach(p => { const el = document.getElementById(p+id); if(el){el.src=src;el.style.display='block';} });
+    const pcellImg = document.querySelector('#pcell-'+id+' img');
+    if (pcellImg) { pcellImg.src = src; pcellImg.style.display = 'block'; }
+    document.getElementById('card-label-'+id).textContent = input.files[0].name;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function saveHeroImage(id) {
+  const cs = dragState['cell-' + id];
+  const fs = dragState['fullscreen-' + id];
+  const file = document.getElementById('hf-' + id).files[0];
+  const size = document.getElementById('hs-' + id).value;
+
+  const formData = new FormData();
+  if (file) formData.append('image', file);
+  formData.append('size', size);
+  formData.append('position_x', Math.round(cs.x).toString());
+  formData.append('position_y', Math.round(cs.y).toString());
+  formData.append('fullscreen_x', Math.round(fs.x).toString());
+  formData.append('fullscreen_y', Math.round(fs.y).toString());
+
+  const res = await fetch('/api/admin/hero/' + id, { method: 'PUT', credentials: 'include', body: formData });
+  const data = await res.json();
+  alert(data.message || data.error);
+  loadHero();
+}
+
+// ── UTILITAIRES ───────────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal').forEach(modal => {
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+});
+
+loadStats();
+</script>
+</body>
+</html>

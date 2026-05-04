@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Panier</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-menu {
+      display: none; position: absolute; top: 100%; left: 0;
+      background: white; border: 1px solid var(--border);
+      min-width: 160px; z-index: 100; padding: 8px 0;
+    }
+    .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+    .nav-dropdown-menu a {
+      display: block; padding: 10px 20px;
+      font-size: 0.82rem; color: var(--muted);
+      text-decoration: none; font-family: Inter, sans-serif;
+    }
+    .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
+    .cart-item {
+      display: flex; align-items: center; gap: 24px;
+      padding: 24px 0; border-bottom: 1px solid var(--border);
+    }
+    .cart-item-image {
+      width: 90px; height: 90px; flex-shrink: 0;
+      background: var(--cream-dark); overflow: hidden;
+    }
+    .cart-item-image img { width: 100%; height: 100%; object-fit: cover; }
+    .cart-summary {
+      margin-top: 40px; padding: 30px;
+      background: white; border: 1px solid var(--border);
+      max-width: 360px;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="boutique.html">Boutique</a>
+    <div class="nav-dropdown">
+      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+      <div class="nav-dropdown-menu" id="nav-categories"></div>
+    </div>
+    <a href="cart.html">🛍 <span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
+    <a href="login.html" id="nav-login">Connexion</a>
+    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
+  </div>
+</nav>
+
+<section style="padding-top:120px; min-height:100vh;">
+  <div style="max-width:900px; margin:0 auto; padding:0 40px;">
+    <p class="section-label">Mon compte</p>
+    <h2 class="section-title">Mon Panier</h2>
+
+    <div id="cart-container"></div>
+
+    <div id="total-section" style="display:none;">
+      <div class="cart-summary">
+        <p style="font-family:Inter,sans-serif; font-size:0.85rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;">Total</p>
+        <p id="total-price" style="font-family:'Playfair Display',serif; font-size:2rem; color:var(--foreground); margin-bottom:8px;"></p>
+        <p style="font-family:Inter,sans-serif; font-size:0.78rem; color:var(--muted); margin-bottom:24px;">Livraison gratuite · Paiement sécurisé</p>
+        <button class="btn-primary" style="width:100%; text-align:center; border:none; cursor:pointer;" onclick="checkout()">
+          Payer maintenant
+        </button>
+      </div>
+    </div>
+
+    <a href="boutique.html" style="display:inline-block; margin-top:30px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:Inter,sans-serif; letter-spacing:0.1em;">
+      ← Continuer mes achats
+    </a>
+  </div>
+</section>
+
+<script>
+async function loadCart() {
+  const res = await fetch('/cart', { credentials: 'include' });
+  const items = await res.json();
+  const container = document.getElementById('cart-container');
+
+  if (items.error) {
+    container.innerHTML = `
+      <div style="padding:40px; text-align:center; background:white; border:1px solid var(--border);">
+        <p style="font-family:Inter,sans-serif; color:var(--muted); margin-bottom:16px;">Vous devez être connecté pour voir votre panier.</p>
+        <a href="login.html" class="btn-primary">Se connecter</a>
+      </div>`;
+    return;
+  }
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div style="padding:60px 40px; text-align:center; background:white; border:1px solid var(--border);">
+        <p style="font-family:'Playfair Display',serif; font-size:1.5rem; margin-bottom:12px;">Votre panier est vide</p>
+        <p style="font-family:Inter,sans-serif; color:var(--muted); margin-bottom:24px;">Découvrez nos collections et ajoutez vos pièces favorites.</p>
+        <a href="boutique.html" class="btn-primary">Voir la boutique</a>
+      </div>`;
+    return;
+  }
+
+  let total = 0;
+  container.innerHTML = items.map(item => {
+    total += item.price * item.quantity;
+    return `
+      <div class="cart-item">
+        <div class="cart-item-image">
+          <img src="../images/${item.image}" alt="${item.name}"
+            onerror="this.parentElement.innerHTML='💍'">
+        </div>
+        <div style="flex:1;">
+          <h3 style="font-size:1.1rem; margin-bottom:4px;">${item.name}</h3>
+          <p style="font-family:Inter,sans-serif; font-size:0.85rem; color:var(--muted); margin-bottom:4px;">Quantité : ${item.quantity}</p>
+          <p style="font-family:Inter,sans-serif; font-size:0.82rem; color:var(--muted);">Sous-total : ${(item.price * item.quantity).toFixed(2)} €</p>
+        </div>
+        <div style="text-align:right;">
+          <p style="font-family:'Playfair Display',serif; font-size:1.2rem; margin-bottom:12px;">${item.price} €</p>
+          <button onclick="removeItem(${item.id})"
+            style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); background:none; border:none; cursor:pointer; font-family:Inter,sans-serif; transition:color 0.2s;"
+            onmouseover="this.style.color='#e74c3c'"
+            onmouseout="this.style.color='var(--muted)'">
+            Supprimer
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('total-section').style.display = 'block';
+  document.getElementById('total-price').textContent = total.toFixed(2) + ' €';
+  updateCartCount();
+}
+
+async function removeItem(id) {
+  await fetch('/cart/' + id, { method: 'DELETE', credentials: 'include' });
+  loadCart();
+}
+
+async function checkout() {
+  const res = await fetch('/cart/checkout', {
+    method: 'POST',
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (data.url) {
+    window.location.href = data.url;
+  } else {
+    alert(data.error || 'Erreur lors du paiement');
+  }
+}
+
+// Gestion retour Stripe
+async function handleStripeReturn() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success')) {
+    await fetch('/cart', { method: 'DELETE', credentials: 'include' });
+    window.location.href = 'confirmation.html';
+  }
+  if (params.get('cancelled')) {
+    alert('Paiement annulé. Votre panier est toujours disponible.');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}
+
+// Navbar
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `
+      <a href="collection.html?category=${encodeURIComponent(c.category)}">
+        ${c.category.charAt(0).toUpperCase() + c.category.slice(1)}
+      </a>
+    `).join('');
+  } catch(e) {}
+}
+
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+async function updateCartCount() {
+  try {
+    const res = await fetch('/cart', { credentials: 'include' });
+    if (res.ok) {
+      const items = await res.json();
+      if (Array.isArray(items) && items.length > 0) {
+        const count = document.getElementById('cart-count');
+        if (count) {
+          count.style.display = 'inline';
+          count.textContent = items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+handleStripeReturn();
+loadCart();
+loadNavCategories();
+updateNav();
+</script>
+
+</body>
+</html>

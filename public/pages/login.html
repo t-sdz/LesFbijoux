@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Connexion</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body style="min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--cream);">
+
+<nav>
+  <a href="index.html" class="nav-logo">ÉCLAT</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="register.html">Inscription</a>
+  </div>
+</nav>
+
+<div style="background:white; padding:50px 40px; width:100%; max-width:380px; border:1px solid var(--border); margin-top:80px;">
+  <h2 style="text-align:center; margin-bottom:8px;">Connexion</h2>
+  <p style="text-align:center; color:var(--muted); font-size:0.85rem; margin-bottom:30px; font-family:Inter,sans-serif;">
+    Bienvenue chez ÉCLAT
+  </p>
+
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <input type="email" id="emailInput" placeholder="Votre email"
+      style="padding:14px 18px; border:1px solid var(--border); font-family:Inter,sans-serif; font-size:0.9rem; outline:none;">
+    <input type="password" id="passwordInput" placeholder="Mot de passe"
+      style="padding:14px 18px; border:1px solid var(--border); font-family:Inter,sans-serif; font-size:0.9rem; outline:none;">
+    <button onclick="handleLogin()"
+      style="padding:16px; background:var(--gold); color:var(--cream); border:none; font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; font-family:Inter,sans-serif; transition:background 0.2s;"
+      onmouseover="this.style.background='var(--gold-dark)'"
+      onmouseout="this.style.background='var(--gold)'">
+      Se connecter
+    </button>
+  </div>
+
+  <p style="text-align:center; margin-top:24px; font-size:0.82rem; color:var(--muted); font-family:Inter,sans-serif;">
+    Pas de compte ? <a href="register.html" style="color:var(--gold); text-decoration:none;">Créer un compte</a>
+  </p>
+</div>
+
+<script>
+async function handleLogin() {
+  const email = document.getElementById('emailInput').value;
+  const password = document.getElementById('passwordInput').value;
+  const res = await fetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  alert(data.message || data.error);
+  if (data.message) window.location.href = 'index.html';
+}
+</script>
+<script>
+// Charge les catégories dans le menu déroulant
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `
+      <a href="collection.html?category=${encodeURIComponent(c.category)}">
+        ${c.category.charAt(0).toUpperCase() + c.category.slice(1)}
+      </a>
+    `).join('');
+  } catch(e) {}
+}
+
+// Vérifie si connecté et met à jour la navbar
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+// Compte les articles dans le panier
+async function updateCartCount() {
+  try {
+    const res = await fetch('/cart', { credentials: 'include' });
+    if (res.ok) {
+      const items = await res.json();
+      if (items.length > 0) {
+        const count = document.getElementById('cart-count');
+        if (count) {
+          count.style.display = 'inline';
+          count.textContent = items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+// Déconnexion
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+loadNavCategories();
+updateNav();
+updateCartCount();
+</script>
+</body>
+</html>

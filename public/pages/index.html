@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Joaillerie</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid var(--border); min-width: 160px; z-index: 100; padding: 8px 0; }
+    .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+    .nav-dropdown-menu a { display: block; padding: 10px 20px; font-size: 0.82rem; color: var(--muted); text-decoration: none; font-family: Inter, sans-serif; }
+    .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
+    #fullscreen-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 0.5s ease; z-index: 0; }
+    #dark-overlay { position: absolute; inset: 0; background: rgba(31,26,20,0.5); opacity: 0; transition: opacity 0.5s ease; z-index: 1; }
+    .gallery-grid { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 2px; z-index: 2; }
+    .gallery-cell { overflow: hidden; position: relative; background: rgba(249,246,241,0.04); cursor: pointer; transition: opacity 0.4s; border: 1px solid rgba(249,246,241,0.03); }
+    .gallery-cell img { width: 100%; height: 100%; object-fit: cover; opacity: 0.35; display: block; transition: opacity 0.3s; }
+    .gallery-grid.has-hover .gallery-cell:not(:hover) { opacity: 0.15; }
+    .gallery-grid.has-hover .gallery-cell:hover img { opacity: 0; }
+    .hero-content { z-index: 3; position: relative; transition: opacity 0.4s; }
+    .hero-content.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="boutique.html">Boutique</a>
+    <div class="nav-dropdown">
+      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+      <div class="nav-dropdown-menu" id="nav-categories"></div>
+    </div>
+    <a href="cart.html">🛍 <span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
+    <a href="login.html" id="nav-login">Connexion</a>
+    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
+  </div>
+</nav>
+
+<section class="hero" id="hero">
+  <div id="fullscreen-bg"></div>
+  <div id="dark-overlay"></div>
+  <div class="gallery-grid" id="gallery-grid"></div>
+  <div class="hero-content" id="hero-content">
+    <p class="hero-subtitle fade-in">Nouvelle Collection</p>
+    <h1 class="fade-in-delay">L'Art de la<br><em>Joaillerie</em></h1>
+    <p class="fade-in-delay-2">Des pièces uniques, façonnées avec passion pour sublimer chaque instant.</p>
+    <a href="#collections" class="btn-primary fade-in-delay-2">Découvrir</a>
+  </div>
+</section>
+
+<section id="collections" style="background: white;">
+  <div class="text-center">
+    <p class="section-label">Explorer</p>
+    <h2 class="section-title">Nos Collections</h2>
+  </div>
+  <div class="collections-grid" id="collections-grid">
+    <p style="font-family:Inter,sans-serif;color:var(--muted);">Chargement...</p>
+  </div>
+</section>
+
+<section id="products" style="background: #ede8dc;">
+  <div class="text-center">
+    <p class="section-label">Sélection</p>
+    <h2 class="section-title">Pièces Favorites</h2>
+  </div>
+  <div class="products-grid" id="product-list">Chargement...</div>
+</section>
+
+<section class="newsletter">
+  <div class="text-center">
+    <h2 class="section-title">Restez Inspiré</h2>
+    <p style="color: var(--muted); margin-bottom: 30px; font-family: Inter, sans-serif;">Inscrivez-vous pour recevoir nos nouveautés et offres exclusives.</p>
+    <div class="newsletter-form">
+      <input type="email" placeholder="Votre adresse email">
+      <button>S'inscrire</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand"><h3>Les F Bijoux</h3><p>Joaillerie d'exception, créée avec amour et savoir-faire artisanal.</p></div>
+    <div class="footer-col"><h4>Boutique</h4><ul><li><a href="boutique.html">Tous les bijoux</a></li><li><a href="collection.html?category=bagues">Bagues</a></li><li><a href="collection.html?category=colliers">Colliers</a></li><li><a href="collection.html?category=bracelets">Bracelets</a></li></ul></div>
+    <div class="footer-col"><h4>À propos</h4><ul><li><a href="#">Notre histoire</a></li><li><a href="#">Savoir-faire</a></li><li><a href="#">Engagement</a></li></ul></div>
+    <div class="footer-col"><h4>Service</h4><ul><li><a href="#">Livraison</a></li><li><a href="#">Retours</a></li><li><a href="#">Contact</a></li><li><a href="#">FAQ</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">© 2026 Les F Bijoux. Tous droits réservés.</div>
+</footer>
+
+<script>
+(function() {
+  const grid        = document.getElementById('gallery-grid');
+  const fullBg      = document.getElementById('fullscreen-bg');
+  const darkOverlay = document.getElementById('dark-overlay');
+  const content     = document.getElementById('hero-content');
+
+  fetch('/products/hero')
+    .then(r => r.json())
+    .then(images => {
+      images.forEach(item => {
+        const cell = document.createElement('div');
+        cell.className = 'gallery-cell';
+
+        if (item.size === '2x1') cell.style.gridColumn = 'span 2';
+        if (item.size === '1x2') cell.style.gridRow = 'span 2';
+        if (item.size === '2x2') { cell.style.gridColumn = 'span 2'; cell.style.gridRow = 'span 2'; }
+
+        const px = isNaN(parseFloat(item.position_x)) ? 50 : parseFloat(item.position_x);
+        const py = isNaN(parseFloat(item.position_y)) ? 50 : parseFloat(item.position_y);
+        const fx = isNaN(parseFloat(item.fullscreen_x)) ? 50 : parseFloat(item.fullscreen_x);
+        const fy = isNaN(parseFloat(item.fullscreen_y)) ? 50 : parseFloat(item.fullscreen_y);
+        const cellPos = px + '% ' + py + '%';
+        const fullPos = fx + '% ' + fy + '%';
+
+        cell.innerHTML = '<img src="../images/' + item.image + '" alt="" style="object-position:' + cellPos + '">';
+
+        cell.addEventListener('mouseenter', () => {
+          grid.classList.add('has-hover');
+          fullBg.style.backgroundImage = "url('../images/" + item.image + "')";
+          fullBg.style.backgroundPosition = fullPos;
+          fullBg.style.opacity = '1';
+          darkOverlay.style.opacity = '0';
+          content.classList.add('hidden');
+        });
+
+        cell.addEventListener('mouseleave', () => {
+          grid.classList.remove('has-hover');
+          fullBg.style.opacity = '0';
+          darkOverlay.style.opacity = '0';
+          content.classList.remove('hidden');
+        });
+
+        grid.appendChild(cell);
+      });
+    });
+})();
+
+async function loadProducts() {
+  const res = await fetch('/products');
+  const products = await res.json();
+  const container = document.getElementById('product-list');
+  container.innerHTML = '';
+  products.forEach(p => {
+    container.innerHTML += `
+      <div class="product-card" onclick="window.location.href='produit.html?id=${p.id}'">
+        <div class="product-card-image">
+          <img src="../images/${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='💍'">
+        </div>
+        <h3>${p.name}</h3>
+        <p class="price">${p.price} €</p>
+        <button class="add-btn" onclick="event.stopPropagation(); addToCart(${p.id})">Ajouter au panier</button>
+      </div>`;
+  });
+}
+
+async function addToCart(id) {
+  const res = await fetch('/cart', { method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify({ product_id: id }) });
+  const data = await res.json();
+  alert(data.message || data.error);
+  updateCartCount();
+}
+
+async function loadCollections() {
+  try {
+    const res = await fetch('/products/collections');
+    if (!res.ok) return;
+    const collections = await res.json();
+    const grid = document.getElementById('collections-grid');
+    if (!grid) return;
+    if (collections.length === 0) { grid.innerHTML = '<p style="font-family:Inter,sans-serif;color:var(--muted);">Aucune collection.</p>'; return; }
+    grid.innerHTML = collections.map(c => `
+      <div class="collection-card" onclick="window.location.href='collection.html?category=${encodeURIComponent(c.name)}'" style="cursor:pointer;position:relative;">
+        <img src="../images/${c.image}" alt="${c.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+        <div class="collection-card-overlay"></div>
+        <div class="collection-card-info">
+          <h3>${c.name.charAt(0).toUpperCase()+c.name.slice(1)}</h3>
+          <p>Voir la collection</p>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `<a href="collection.html?category=${encodeURIComponent(c.category)}">${c.category.charAt(0).toUpperCase()+c.category.slice(1)}</a>`).join('');
+  } catch(e) {}
+}
+
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+async function updateCartCount() {
+  try {
+    const res = await fetch('/cart', { credentials: 'include' });
+    if (res.ok) {
+      const items = await res.json();
+      if (items.length > 0) {
+        const count = document.getElementById('cart-count');
+        if (count) { count.style.display = 'inline'; count.textContent = items.reduce((sum, i) => sum + i.quantity, 0); }
+      }
+    }
+  } catch(e) {}
+}
+
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+loadProducts();
+loadCollections();
+loadNavCategories();
+updateNav();
+updateCartCount();
+</script>
+</body>
+</html>

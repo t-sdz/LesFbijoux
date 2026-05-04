@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Commande confirmée</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-menu {
+      display: none; position: absolute; top: 100%; left: 0;
+      background: white; border: 1px solid var(--border);
+      min-width: 160px; z-index: 100; padding: 8px 0;
+    }
+    .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+    .nav-dropdown-menu a {
+      display: block; padding: 10px 20px;
+      font-size: 0.82rem; color: var(--muted);
+      text-decoration: none; font-family: Inter, sans-serif;
+    }
+    .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
+    .confirmation-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 40px 80px;
+      background: var(--cream);
+    }
+    .confirmation-box {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 60px 50px;
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+    }
+    .confirmation-icon {
+      width: 72px; height: 72px;
+      background: var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 32px;
+      font-size: 2rem;
+    }
+    .confirmation-box h1 {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      color: var(--foreground);
+    }
+    .confirmation-box .subtitle {
+      font-family: Inter, sans-serif;
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+    .confirmation-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+    .confirmation-details {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 40px;
+      text-align: left;
+    }
+    .confirmation-detail {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Inter, sans-serif;
+      font-size: 0.85rem;
+    }
+    .confirmation-detail span:first-child { color: var(--muted); }
+    .confirmation-detail span:last-child { color: var(--foreground); font-weight: 500; }
+    .confirmation-actions {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+    .btn-outline {
+      display: inline-block;
+      padding: 14px 32px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      font-family: Inter, sans-serif;
+      color: var(--muted);
+      transition: all 0.2s;
+      cursor: pointer;
+      background: none;
+      width: 100%;
+    }
+    .btn-outline:hover { border-color: var(--foreground); color: var(--foreground); }
+    @keyframes checkmark {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .confirmation-icon { animation: checkmark 0.5s ease-out forwards; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="boutique.html">Boutique</a>
+    <div class="nav-dropdown">
+      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+      <div class="nav-dropdown-menu" id="nav-categories"></div>
+    </div>
+    <a href="login.html" id="nav-login">Connexion</a>
+    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
+  </div>
+</nav>
+
+<div class="confirmation-page">
+  <div class="confirmation-box">
+
+    <div class="confirmation-icon">✓</div>
+
+    <h1>Merci pour votre commande !</h1>
+    <p class="subtitle">
+      Votre paiement a bien été reçu. Vous allez recevoir un email de confirmation dans quelques instants. Nous préparons votre commande avec soin.
+    </p>
+
+    <hr class="confirmation-divider">
+
+    <div class="confirmation-details">
+      <div class="confirmation-detail">
+        <span>Statut</span>
+        <span style="color: #27ae60;">✓ Paiement confirmé</span>
+      </div>
+      <div class="confirmation-detail">
+        <span>Livraison estimée</span>
+        <span>3 à 5 jours ouvrés</span>
+      </div>
+      <div class="confirmation-detail">
+        <span>Expédition</span>
+        <span>Gratuite</span>
+      </div>
+    </div>
+
+    <hr class="confirmation-divider">
+
+    <div class="confirmation-actions">
+      <a href="boutique.html" class="btn-primary" style="text-align:center;">
+        Continuer mes achats
+      </a>
+      <a href="index.html" class="btn-outline">
+        Retour à l'accueil
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `
+      <a href="collection.html?category=${encodeURIComponent(c.category)}">
+        ${c.category.charAt(0).toUpperCase() + c.category.slice(1)}
+      </a>
+    `).join('');
+  } catch(e) {}
+}
+
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+loadNavCategories();
+updateNav();
+</script>
+
+</body>
+</html>

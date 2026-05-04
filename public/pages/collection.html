@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Collection</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html#collections">Collections</a>
+    <a href="index.html#products">Boutique</a>
+    <a href="login.html">Connexion</a>
+    <a href="cart.html">🛍 Panier</a>
+    <a href="admin.html" id="admin-link" style="display:none;">⚙ Admin</a>
+  </div>
+</nav>
+
+<section style="padding-top:120px; min-height:100vh; background:#ede8dc;">
+  <div style="max-width:1100px; margin:0 auto; padding:0 40px;">
+    <p class="section-label">Collection</p>
+    <h2 class="section-title" id="collection-title">Chargement...</h2>
+
+    <div class="products-grid" id="product-list">
+      <p style="font-family:Inter,sans-serif; color:var(--muted);">Chargement des produits...</p>
+    </div>
+
+    <a href="index.html" style="display:inline-block; margin-top:40px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:Inter,sans-serif; letter-spacing:0.1em;">
+      ← Retour aux collections
+    </a>
+  </div>
+</section>
+
+<script>
+async function loadCollection() {
+  // Récupère la catégorie dans l'URL (?category=bagues)
+  const params = new URLSearchParams(window.location.search);
+  const category = params.get('category');
+
+  if (!category) {
+    document.getElementById('collection-title').textContent = 'Collection introuvable';
+    return;
+  }
+
+  // Met à jour le titre
+  const titre = category.charAt(0).toUpperCase() + category.slice(1);
+  document.getElementById('collection-title').textContent = titre;
+  document.title = `ÉCLAT — ${titre}`;
+
+  // Charge tous les produits et filtre par catégorie
+  const res = await fetch('/products');
+  const products = await res.json();
+  const filtered = products.filter(p =>
+    p.category && p.category.toLowerCase() === category.toLowerCase()
+  );
+
+  const container = document.getElementById('product-list');
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <p style="font-family:Inter,sans-serif; color:var(--muted); grid-column:1/-1;">
+        Aucun produit dans cette collection pour le moment.
+      </p>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => `
+    <div class="product-card">
+    <div class="product-card-image">
+      <img src="../images/${p.image}" alt="${p.name}" style="width:100%; height:100%; object-fit:cover;">
+    </div>
+      <h3>${p.name}</h3>
+      <p class="price">${p.price} €</p>
+      <button class="add-btn" onclick="addToCart(${p.id})">Ajouter au panier</button>
+    </div>
+  `).join('');
+}
+
+async function addToCart(id) {
+  const res = await fetch('/cart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ product_id: id })
+  });
+  const data = await res.json();
+  alert(data.message || data.error);
+}
+
+async function checkAdminLink() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.isAdmin) document.getElementById('admin-link').style.display = 'inline';
+    }
+  } catch (e) {}
+}
+
+loadCollection();
+checkAdminLink();
+</script>
+<script>
+// Charge les catégories dans le menu déroulant
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `
+      <a href="collection.html?category=${encodeURIComponent(c.category)}">
+        ${c.category.charAt(0).toUpperCase() + c.category.slice(1)}
+      </a>
+    `).join('');
+  } catch(e) {}
+}
+
+// Vérifie si connecté et met à jour la navbar
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+// Compte les articles dans le panier
+async function updateCartCount() {
+  try {
+    const res = await fetch('/cart', { credentials: 'include' });
+    if (res.ok) {
+      const items = await res.json();
+      if (items.length > 0) {
+        const count = document.getElementById('cart-count');
+        if (count) {
+          count.style.display = 'inline';
+          count.textContent = items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+// Déconnexion
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+loadNavCategories();
+updateNav();
+updateCartCount();
+</script>
+</body>
+</html>

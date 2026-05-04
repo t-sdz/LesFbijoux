@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les F Bijoux — Produit</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .product-page {
+      max-width: 1100px; margin: 0 auto;
+      padding: 120px 40px 80px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 60px; align-items: start;
+    }
+    .product-image-box {
+      aspect-ratio: 1;
+      background: var(--cream-dark);
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .product-image-box img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .product-image-box .emoji-placeholder {
+      font-size: 8rem; opacity: 0.3;
+    }
+    .product-info { padding-top: 20px; }
+    .product-info .category {
+      font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--gold); font-family: Inter, sans-serif; margin-bottom: 12px;
+    }
+    .product-info h1 {
+      font-size: 2.2rem; margin-bottom: 16px; line-height: 1.2;
+    }
+    .product-info .price {
+      font-size: 1.8rem; font-family: 'Playfair Display', serif;
+      color: var(--foreground); margin-bottom: 24px;
+    }
+    .product-info .description {
+      font-family: Inter, sans-serif; font-size: 0.92rem;
+      color: var(--muted); line-height: 1.8; margin-bottom: 36px;
+      border-top: 1px solid var(--border); padding-top: 24px;
+    }
+    .quantity-row {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+    }
+    .quantity-row label {
+      font-family: Inter, sans-serif; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    }
+    .quantity-input {
+      display: flex; align-items: center; border: 1px solid var(--border);
+    }
+    .quantity-input button {
+      padding: 10px 16px; background: none; border: none;
+      cursor: pointer; font-size: 1rem; color: var(--foreground);
+    }
+    .quantity-input span {
+      padding: 10px 20px; font-family: Inter, sans-serif;
+      font-size: 0.9rem; border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border); min-width: 50px; text-align: center;
+    }
+    .btn-add-cart {
+      width: 100%; padding: 18px; background: var(--foreground);
+      color: var(--cream); border: none; font-size: 0.75rem;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      cursor: pointer; font-family: Inter, sans-serif;
+      transition: background 0.2s; margin-bottom: 12px;
+    }
+    .btn-add-cart:hover { background: var(--gold); }
+    .back-link {
+      display: inline-block; margin-top: 16px;
+      font-size: 0.8rem; color: var(--gold); text-decoration: none;
+      font-family: Inter, sans-serif; letter-spacing: 0.1em;
+    }
+    .product-meta {
+      margin-top: 32px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .product-meta p {
+      font-family: Inter, sans-serif; font-size: 0.82rem;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .product-meta span { color: var(--foreground); }
+    @media (max-width: 700px) {
+      .product-page { grid-template-columns: 1fr; gap: 30px; padding: 100px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Les F Bijoux</a>
+  <div class="nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="boutique.html">Boutique</a>
+    <div class="nav-dropdown">
+      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+      <div class="nav-dropdown-menu" id="nav-categories"></div>
+    </div>
+    <a href="cart.html">🛍 <span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
+    <a href="login.html" id="nav-login">Connexion</a>
+    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
+  </div>
+</nav>
+
+<div class="product-page" id="product-page">
+  <p style="font-family:Inter,sans-serif; color:var(--muted);">Chargement...</p>
+</div>
+
+<style>
+  .nav-dropdown { position: relative; }
+  .nav-dropdown-menu {
+    display: none; position: absolute; top: 100%; left: 0;
+    background: white; border: 1px solid var(--border);
+    min-width: 160px; z-index: 100; padding: 8px 0;
+  }
+  .nav-dropdown:hover .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a {
+    display: block; padding: 10px 20px;
+    font-size: 0.82rem; color: var(--muted);
+    text-decoration: none; font-family: Inter, sans-serif;
+  }
+  .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
+</style>
+
+<script>
+let quantity = 1;
+
+async function loadProduct() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+
+  if (!id) {
+    window.location.href = 'boutique.html';
+    return;
+  }
+
+  const res = await fetch('/products/' + id);
+  if (!res.ok) {
+    window.location.href = 'boutique.html';
+    return;
+  }
+
+  const p = await res.json();
+  document.title = `Les F Bijoux — ${p.name}`;
+
+  const page = document.getElementById('product-page');
+  page.innerHTML = `
+    <div class="product-image-box">
+      <img src="../images/${p.image}" alt="${p.name}"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="emoji-placeholder" style="display:none;">💍</div>
+    </div>
+    <div class="product-info">
+      <p class="category">${p.category || 'Bijoux'}</p>
+      <h1>${p.name}</h1>
+      <p class="price">${p.price} €</p>
+      <p class="description">${p.description || 'Une pièce unique façonnée avec soin et savoir-faire artisanal.'}</p>
+
+      <div class="quantity-row">
+        <label>Quantité</label>
+        <div class="quantity-input">
+          <button onclick="changeQty(-1)">−</button>
+          <span id="qty-display">1</span>
+          <button onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+
+      <button class="btn-add-cart" onclick="addToCart(${p.id})">
+        Ajouter au panier
+      </button>
+
+      <a href="boutique.html" class="back-link">← Retour à la boutique</a>
+
+      <div class="product-meta">
+        <p>Référence : <span>#${p.id.toString().padStart(4, '0')}</span></p>
+        ${p.category ? `<p>Collection : <span><a href="collection.html?category=${p.category}" style="color:var(--gold); text-decoration:none;">${p.category.charAt(0).toUpperCase() + p.category.slice(1)}</a></span></p>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function changeQty(delta) {
+  quantity = Math.max(1, quantity + delta);
+  document.getElementById('qty-display').textContent = quantity;
+}
+
+async function addToCart(id) {
+  for (let i = 0; i < quantity; i++) {
+    await fetch('/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ product_id: id })
+    });
+  }
+  updateCartCount();
+  alert(`${quantity} article${quantity > 1 ? 's' : ''} ajouté${quantity > 1 ? 's' : ''} au panier !`);
+}
+
+async function loadNavCategories() {
+  try {
+    const res = await fetch('/products/categories');
+    const categories = await res.json();
+    const menu = document.getElementById('nav-categories');
+    if (!menu) return;
+    menu.innerHTML = categories.map(c => `
+      <a href="collection.html?category=${encodeURIComponent(c.category)}">
+        ${c.category.charAt(0).toUpperCase() + c.category.slice(1)}
+      </a>
+    `).join('');
+  } catch(e) {}
+}
+
+async function updateNav() {
+  try {
+    const res = await fetch('/auth/me', { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('nav-login').style.display = 'none';
+      document.getElementById('nav-logout').style.display = 'inline';
+      if (data.isAdmin) document.getElementById('nav-admin').style.display = 'inline';
+    }
+  } catch(e) {}
+}
+
+async function updateCartCount() {
+  try {
+    const res = await fetch('/cart', { credentials: 'include' });
+    if (res.ok) {
+      const items = await res.json();
+      if (items.length > 0) {
+        const count = document.getElementById('cart-count');
+        if (count) {
+          count.style.display = 'inline';
+          count.textContent = items.reduce((sum, i) => sum + i.quantity, 0);
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+async function logout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = 'index.html';
+}
+
+loadProduct();
+loadNavCategories();
+updateNav();
+updateCartCount();
+</script>
+
+</body>
+</html>
