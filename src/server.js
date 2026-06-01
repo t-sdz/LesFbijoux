@@ -2,14 +2,31 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security headers (CSP, HSTS, X-Content-Type-Options, etc.)
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", 'js.stripe.com'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'fonts.googleapis.com'],
+            fontSrc: ["'self'", 'fonts.gstatic.com'],
+            imgSrc: ["'self'", 'data:', 'blob:'],
+            frameSrc: ['js.stripe.com'],
+            connectSrc: ["'self'", 'api.stripe.com'],
+        },
+    },
+    crossOriginEmbedderPolicy: false,
+}));
+
 // Middlewares
-app.use(cors());
+app.use(cors({ origin: process.env.BASE_URL || 'http://localhost:3000', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -19,7 +36,11 @@ app.use(
         secret: process.env.SESSION_SECRET || 'fallback_secret',
         resave: false,
         saveUninitialized: false,
-        cookie: { secure: false }
+        cookie: {
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            httpOnly: true,
+        },
     })
 );
 
@@ -46,7 +67,7 @@ app.use('/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Routes pages
-const pages = ['index', 'login', 'register', 'cart', 'admin', 'collection', 'boutique', 'produit','confirmation'];
+const pages = ['index', 'login', 'register', 'cart', 'admin', 'collection', 'boutique', 'produit', 'confirmation'];
 pages.forEach(page => {
     app.get(`/${page}.html`, (req, res) => {
         res.sendFile(path.join(__dirname, `../public/${page}.html`));
@@ -55,10 +76,10 @@ pages.forEach(page => {
 
 // Route principale
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
 // Lancer le serveur
 app.listen(PORT, () => {
-    console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+    console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });

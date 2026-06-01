@@ -1,101 +1,68 @@
-const express = require("express");
+const express = require('express');
+const { z } = require('zod');
+const cartService = require('../services/cartService');
+const authService = require('../services/authService');
+const emailService = require('../services/emailService');
+
 const router = express.Router();
-const db = require("../db/database");
+
+const addToCartSchema = z.object({
+    product_id: z.number({ coerce: true }).int().positive('product_id doit être un entier positif'),
+});
 
 function isAuthenticated(req, res, next) {
     if (!req.session.userId)
-        return res.status(401).json({ error: "Tu dois être connecté" });
+        return res.status(401).json({ error: 'Tu dois être connecté' });
     next();
 }
 
-// GET /cart
-router.get("/", isAuthenticated, async (req, res) => {
+router.get('/', isAuthenticated, async (req, res) => {
     try {
-        const result = await db.execute({
-            sql: `SELECT cart_items.id, cart_items.quantity,
-                   products.name, products.price, products.image
-                  FROM cart_items
-                  JOIN products ON cart_items.product_id = products.id
-                  WHERE cart_items.user_id = ?`,
-            args: [req.session.userId]
-        });
-        res.json(result.rows);
+        res.json(await cartService.getCartByUser(req.session.userId));
     } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// POST /cart
-router.post("/", isAuthenticated, async (req, res) => {
-    const { product_id } = req.body;
-    if (!product_id)
-        return res.status(400).json({ error: "product_id requis" });
+router.post('/', isAuthenticated, async (req, res) => {
+    const parsed = addToCartSchema.safeParse(req.body);
+    if (!parsed.success)
+        return res.status(400).json({ error: parsed.error.errors[0].message });
 
     try {
-        const existing = await db.execute({
-            sql: "SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?",
-            args: [req.session.userId, product_id]
-        });
-
-        if (existing.rows[0]) {
-            await db.execute({
-                sql: "UPDATE cart_items SET quantity = quantity + 1 WHERE id = ?",
-                args: [existing.rows[0].id]
-            });
-            res.json({ message: "Quantité mise à jour !" });
-        } else {
-            await db.execute({
-                sql: "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, 1)",
-                args: [req.session.userId, product_id]
-            });
-            res.json({ message: "Produit ajouté au panier !" });
-        }
+        const action = await cartService.addOrIncrement(req.session.userId, parsed.data.product_id);
+        const message = action === 'updated' ? 'Quantité mise à jour !' : 'Produit ajouté au panier !';
+        res.json({ message });
     } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// DELETE /cart/:id
-router.delete("/:id", isAuthenticated, async (req, res) => {
+router.delete('/:id', isAuthenticated, async (req, res) => {
     try {
-        await db.execute({
-            sql: "DELETE FROM cart_items WHERE id = ? AND user_id = ?",
-            args: [req.params.id, req.session.userId]
-        });
-        res.json({ message: "Article supprimé du panier !" });
+        await cartService.removeItem(req.params.id, req.session.userId);
+        res.json({ message: 'Article supprimé du panier !' });
     } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// DELETE /cart — vider tout le panier
-router.delete("/", isAuthenticated, async (req, res) => {
+router.delete('/', isAuthenticated, async (req, res) => {
     try {
-        await db.execute({
-            sql: "DELETE FROM cart_items WHERE user_id = ?",
-            args: [req.session.userId]
-        });
-        res.json({ message: "Panier vidé !" });
+        await cartService.clearCart(req.session.userId);
+        res.json({ message: 'Panier vidé !' });
     } catch (err) {
-        res.status(500).json({ error: "Erreur serveur" });
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
-// POST /cart/checkout
-router.post("/checkout", isAuthenticated, async (req, res) => {
+router.post('/checkout', isAuthenticated, async (req, res) => {
     try {
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        const result = await db.execute({
-            sql: `SELECT cart_items.quantity, products.name, products.price
-                  FROM cart_items
-                  JOIN products ON cart_items.product_id = products.id
-                  WHERE cart_items.user_id = ?`,
-            args: [req.session.userId]
-        });
-        const items = result.rows;
+        const items = await cartService.getItemsForCheckout(req.session.userId);
 
         if (items.length === 0)
-            return res.status(400).json({ error: "Panier vide" });
+            return res.status(400).json({ error: 'Panier vide' });
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -108,14 +75,30 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
                 quantity: item.quantity,
             })),
             mode: 'payment',
-            success_url: process.env.BASE_URL + '/cart.html?success=true',
+            success_url: process.env.BASE_URL + '/confirmation.html?success=true',
             cancel_url: process.env.BASE_URL + '/cart.html?cancelled=true',
         });
 
         res.json({ url: session.url });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: "Erreur paiement" });
+        res.status(500).json({ error: 'Erreur paiement' });
+    }
+});
+
+// Appelé depuis la page de confirmation après paiement réussi
+router.post('/confirm-order', isAuthenticated, async (req, res) => {
+    try {
+        const user = await authService.findById(req.session.userId);
+        const items = await cartService.getCartByUser(req.session.userId);
+
+        await emailService.sendOrderConfirmation(user.email, items);
+        await cartService.clearCart(req.session.userId);
+
+        res.json({ message: 'Commande confirmée, email envoyé !' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erreur confirmation commande' });
     }
 });
 

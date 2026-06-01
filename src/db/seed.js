@@ -1,24 +1,45 @@
 const db = require('./database');
 
-console.log("📌 Insertion des bijoux...");
-
-db.prepare("DELETE FROM products").run();
-
-const insert = db.prepare(
-    "INSERT INTO products (name, description, price, image, category) VALUES (?, ?, ?, ?, ?)"
-);
-
 const products = [
-    ["Collier Or",               "Collier délicat en or 18 carats",         49.99,  "collier.jpg",  "colliers"],
-    ["Bracelet Argent",          "Bracelet fin en argent 925",               29.99,  "bracelet.jpg", "bracelets"],
-    ["Boucles d'oreilles Perles","Boucles d'oreilles en perles naturelles",  19.99,  "boucles.jpg",  "boucles"],
-    ["Bague Diamant",            "Bague solitaire avec diamant 0.3 carat",   99.99,  "bague.jpg",    "bagues"],
+    ['Collier Or',                'Collier délicat en or 18 carats',          49.99,  'collier.jpg',  'colliers'],
+    ['Bracelet Argent',           'Bracelet fin en argent 925',                29.99,  'bracelet.jpg', 'bracelets'],
+    ["Boucles d'oreilles Perles", "Boucles d'oreilles en perles naturelles",   19.99,  'boucles.jpg',  'boucles'],
+    ['Bague Diamant',             'Bague solitaire avec diamant 0.3 carat',    99.99,  'bague.jpg',    'bagues'],
 ];
 
-const insertMany = db.transaction((items) => {
-    for (const p of items) insert.run(...p);
+const collections = [
+    ['colliers',   'collier.jpg'],
+    ['bracelets',  'bracelet.jpg'],
+    ['boucles',    'boucles.jpg'],
+    ['bagues',     'bague.jpg'],
+];
+
+async function seed() {
+    console.log('Suppression des données existantes...');
+    await db.execute('DELETE FROM cart_items');
+    await db.execute('DELETE FROM products');
+    await db.execute('DELETE FROM collections');
+
+    console.log('Insertion des produits...');
+    for (const [name, description, price, image, category] of products) {
+        await db.execute({
+            sql: 'INSERT INTO products (name, description, price, image, category) VALUES (?, ?, ?, ?, ?)',
+            args: [name, description, price, image, category],
+        });
+    }
+
+    console.log('Insertion des collections...');
+    for (const [name, image] of collections) {
+        await db.execute({
+            sql: 'INSERT OR IGNORE INTO collections (name, image) VALUES (?, ?)',
+            args: [name, image],
+        });
+    }
+
+    console.log('Base de données peuplée avec les données de démo.');
+}
+
+seed().catch(err => {
+    console.error('Erreur seed :', err);
+    process.exit(1);
 });
-
-insertMany(products);
-
-console.log("✨ Base initialisée !");
