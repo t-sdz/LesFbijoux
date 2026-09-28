@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les F Bijoux — Collection</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/theme.js"></script>
 </head>
 <body>
 
@@ -25,10 +26,10 @@
     <h2 class="section-title" id="collection-title">Chargement...</h2>
 
     <div class="products-grid" id="product-list">
-      <p style="font-family:Inter,sans-serif; color:var(--muted);">Chargement des produits...</p>
+      <p style="font-family:var(--font-body); color:var(--muted);">Chargement des produits...</p>
     </div>
 
-    <a href="index.html" style="display:inline-block; margin-top:40px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:Inter,sans-serif; letter-spacing:0.1em;">
+    <a href="index.html" style="display:inline-block; margin-top:40px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:var(--font-body); letter-spacing:0.1em;">
       ← Retour aux collections
     </a>
   </div>
@@ -61,7 +62,7 @@ async function loadCollection() {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <p style="font-family:Inter,sans-serif; color:var(--muted); grid-column:1/-1;">
+      <p style="font-family:var(--font-body); color:var(--muted); grid-column:1/-1;">
         Aucun produit dans cette collection pour le moment.
       </p>`;
     return;

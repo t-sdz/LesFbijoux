@@ -54,6 +54,13 @@ async function initDb() {
         )
     `);
 
+    await db.execute(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    `);
+
     // Indexes sur les colonnes de jointure critiques
     await db.execute(`CREATE INDEX IF NOT EXISTS idx_cart_user ON cart_items(user_id)`);
     await db.execute(`CREATE INDEX IF NOT EXISTS idx_cart_product ON cart_items(product_id)`);

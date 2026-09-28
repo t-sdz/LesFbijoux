@@ -10,16 +10,18 @@
   --foreground: #1f1a14;
   --muted: #7a7068;
   --border: #e0d8cc;
+  --font-title: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 body {
   background: var(--cream);
   color: var(--foreground);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-title);
 }
 
 /* ── NAVBAR ─────────────────────────────────────────────────────────────────── */
@@ -27,7 +29,7 @@ nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 50;
-  background: rgba(249,246,241,0.92);
+  background: color-mix(in srgb, var(--cream) 92%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
   padding: 18px 40px;
@@ -37,7 +39,7 @@ nav {
 }
 
 .nav-logo {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-title);
   font-size: 1.8rem;
   letter-spacing: 0.15em;
   color: var(--foreground);
@@ -64,7 +66,7 @@ nav {
 .nav-dropdown-menu a {
   display: block; padding: 10px 20px;
   font-size: 0.82rem; color: var(--muted);
-  text-decoration: none; font-family: Inter, sans-serif;
+  text-decoration: none; font-family: var(--font-body);
 }
 .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
 
@@ -143,7 +145,7 @@ nav {
   text-transform: uppercase;
   color: var(--gold);
   margin-bottom: 20px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
 }
 
 .hero h1 {
@@ -173,7 +175,7 @@ nav {
   text-transform: uppercase;
   text-decoration: none;
   transition: background 0.2s;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
 }
 .btn-primary:hover { background: var(--gold-dark); }
 
@@ -186,7 +188,7 @@ section { padding: 80px 40px; }
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 12px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
 }
 
 .section-title {
@@ -254,7 +256,7 @@ section { padding: 80px 40px; }
 .collection-card-info p {
   font-size: 0.8rem;
   color: rgba(249,246,241,0.7);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
 }
 
 /* ── PRODUITS ────────────────────────────────────────────────────────────────── */
@@ -292,7 +294,7 @@ section { padding: 80px 40px; }
 .product-card .price {
   font-size: 0.85rem;
   color: var(--muted);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   margin-bottom: 10px;
 }
 
@@ -305,7 +307,7 @@ section { padding: 80px 40px; }
   border: none;
   cursor: pointer;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   transition: color 0.2s;
 }
 .product-card .add-btn:hover { color: var(--gold-dark); }
@@ -325,7 +327,7 @@ section { padding: 80px 40px; }
   padding: 14px 18px;
   border: 1px solid var(--border);
   background: white;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.85rem;
   outline: none;
   min-width: 200px;
@@ -340,7 +342,7 @@ section { padding: 80px 40px; }
   letter-spacing: 0.15em;
   text-transform: uppercase;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   transition: background 0.2s;
 }
 .newsletter-form button:hover { background: var(--gold-dark); }
@@ -367,13 +369,13 @@ footer {
   font-size: 0.8rem;
   color: var(--muted);
   line-height: 1.7;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
 }
 .footer-col h4 {
   font-size: 0.7rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   margin-bottom: 16px;
   color: var(--foreground);
 }
@@ -383,7 +385,7 @@ footer {
   font-size: 0.82rem;
   color: var(--muted);
   text-decoration: none;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   transition: color 0.2s;
 }
 .footer-col ul li a:hover { color: var(--foreground); }
@@ -393,7 +395,7 @@ footer {
   text-align: center;
   font-size: 0.72rem;
   color: var(--muted);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-body);
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -406,3 +408,20 @@ footer {
 .fade-in { animation: fade-in-up 0.8s ease-out forwards; }
 .fade-in-delay { animation: fade-in-up 0.8s ease-out 0.2s forwards; opacity: 0; }
 .fade-in-delay-2 { animation: fade-in-up 0.8s ease-out 0.4s forwards; opacity: 0; }
+
+/* ── BLOCS DE L'ACCUEIL (réglés depuis l'admin, onglet Apparence) ─────────────── */
+.hero.size-moyen   { min-height: 70vh; }
+.hero.size-compact { min-height: 50vh; }
+
+section.bg-site  { background: var(--cream); }
+section.bg-alt   { background: var(--cream-dark); }
+section.bg-blanc { background: #fff; }
+
+section.cols-2 .products-grid, section.cols-2 .collections-grid { grid-template-columns: repeat(2, 1fr); }
+section.cols-3 .products-grid, section.cols-3 .collections-grid { grid-template-columns: repeat(3, 1fr); }
+section.cols-4 .products-grid, section.cols-4 .collections-grid { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 700px) {
+  section.cols-3 .products-grid, section.cols-4 .products-grid { grid-template-columns: repeat(2, 1fr); }
+  section.cols-2 .collections-grid, section.cols-3 .collections-grid, section.cols-4 .collections-grid { grid-template-columns: 1fr; }
+}

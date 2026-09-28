@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const xss = require('xss');
 const adminService = require('../services/adminService');
+const settingsService = require('../services/settingsService');
 
 const router = express.Router();
 
@@ -45,6 +46,36 @@ const productSchema = z.object({
 
 const collectionSchema = z.object({
     name: z.string().min(1, 'Nom de collection requis').max(100),
+});
+
+const fontName = z.enum(settingsService.FONTS.map(f => f.name));
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Couleur invalide');
+const blockBackground = z.enum(['site', 'alt', 'blanc']);
+const blockColumns = z.enum(['auto', '2', '3', '4']);
+
+const blockSchema = z.discriminatedUnion('id', [
+    z.object({ id: z.literal('hero'), visible: z.boolean(), size: z.enum(['plein', 'moyen', 'compact']) }),
+    z.object({ id: z.literal('collections'), visible: z.boolean(), columns: blockColumns, background: blockBackground }),
+    z.object({ id: z.literal('products'), visible: z.boolean(), columns: blockColumns, background: blockBackground }),
+    z.object({ id: z.literal('newsletter'), visible: z.boolean(), background: blockBackground }),
+]);
+
+const settingsSchema = z.object({
+    siteName: z.string().trim().min(1, 'Nom de la boutique requis').max(60),
+    footerText: z.string().trim().max(200),
+    hero: z.object({
+        subtitle: z.string().trim().max(60),
+        title: z.string().trim().min(1, 'Titre de la bannière requis').max(60),
+        titleAccent: z.string().trim().max(60),
+        text: z.string().trim().max(200),
+        button: z.string().trim().min(1, 'Texte du bouton requis').max(30),
+    }),
+    fonts: z.object({ title: fontName, body: fontName }),
+    colors: z.object({ background: hexColor, text: hexColor, accent: hexColor }),
+    blocks: z.array(blockSchema).length(4).refine(
+        blocks => new Set(blocks.map(b => b.id)).size === 4,
+        'Chaque bloc doit apparaître une seule fois'
+    ),
 });
 
 // ─── MIDDLEWARE ADMIN ─────────────────────────────────────────────────────────
@@ -216,6 +247,21 @@ router.put('/hero/:id', isAdmin, upload.single('image'), async (req, res) => {
             req.params.id, image, position_x, position_y, size, fullscreen_x, fullscreen_y
         );
         res.json({ message: 'Image mise à jour !' });
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// ─── APPARENCE DU SITE ────────────────────────────────────────────────────────
+
+router.put('/settings', isAdmin, async (req, res) => {
+    const parsed = settingsSchema.safeParse(req.body);
+    if (!parsed.success)
+        return res.status(400).json({ error: parsed.error.issues[0].message });
+
+    try {
+        await settingsService.saveSettings(parsed.data);
+        res.json({ message: 'Apparence enregistrée !', settings: parsed.data });
     } catch (err) {
         res.status(500).json({ error: 'Erreur serveur' });
     }

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les F Bijoux — Inscription</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/theme.js"></script>
 </head>
 <body style="min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:var(--cream);">
 
@@ -18,24 +19,24 @@
 
 <div style="background:white; padding:50px 40px; width:100%; max-width:380px; border:1px solid var(--border); margin-top:80px;">
   <h2 style="text-align:center; margin-bottom:8px;">Créer un compte</h2>
-  <p style="text-align:center; color:var(--muted); font-size:0.85rem; margin-bottom:30px; font-family:Inter,sans-serif;">
+  <p style="text-align:center; color:var(--muted); font-size:0.85rem; margin-bottom:30px; font-family:var(--font-body);">
     Rejoignez la communauté ÉCLAT
   </p>
 
   <div style="display:flex; flex-direction:column; gap:16px;">
     <input type="email" id="emailInput" placeholder="Votre email"
-      style="padding:14px 18px; border:1px solid var(--border); font-family:Inter,sans-serif; font-size:0.9rem; outline:none;">
+      style="padding:14px 18px; border:1px solid var(--border); font-family:var(--font-body); font-size:0.9rem; outline:none;">
     <input type="password" id="passwordInput" placeholder="Mot de passe"
-      style="padding:14px 18px; border:1px solid var(--border); font-family:Inter,sans-serif; font-size:0.9rem; outline:none;">
+      style="padding:14px 18px; border:1px solid var(--border); font-family:var(--font-body); font-size:0.9rem; outline:none;">
     <button onclick="handleRegister()"
-      style="padding:16px; background:var(--gold); color:var(--cream); border:none; font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; font-family:Inter,sans-serif;"
+      style="padding:16px; background:var(--gold); color:var(--cream); border:none; font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; font-family:var(--font-body);"
       onmouseover="this.style.background='var(--gold-dark)'"
       onmouseout="this.style.background='var(--gold)'">
       S'inscrire
     </button>
   </div>
 
-  <p style="text-align:center; margin-top:24px; font-size:0.82rem; color:var(--muted); font-family:Inter,sans-serif;">
+  <p style="text-align:center; margin-top:24px; font-size:0.82rem; color:var(--muted); font-family:var(--font-body);">
     Déjà un compte ? <a href="login.html" style="color:var(--gold); text-decoration:none;">Se connecter</a>
   </p>
 </div>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les F Bijoux — Panier</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/theme.js"></script>
   <style>
     .nav-dropdown { position: relative; }
     .nav-dropdown-menu {
@@ -16,7 +17,7 @@
     .nav-dropdown-menu a {
       display: block; padding: 10px 20px;
       font-size: 0.82rem; color: var(--muted);
-      text-decoration: none; font-family: Inter, sans-serif;
+      text-decoration: none; font-family: var(--font-body);
     }
     .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
     .cart-item {
@@ -62,16 +63,16 @@
 
     <div id="total-section" style="display:none;">
       <div class="cart-summary">
-        <p style="font-family:Inter,sans-serif; font-size:0.85rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;">Total</p>
-        <p id="total-price" style="font-family:'Playfair Display',serif; font-size:2rem; color:var(--foreground); margin-bottom:8px;"></p>
-        <p style="font-family:Inter,sans-serif; font-size:0.78rem; color:var(--muted); margin-bottom:24px;">Livraison gratuite · Paiement sécurisé</p>
+        <p style="font-family:var(--font-body); font-size:0.85rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;">Total</p>
+        <p id="total-price" style="font-family:var(--font-title); font-size:2rem; color:var(--foreground); margin-bottom:8px;"></p>
+        <p style="font-family:var(--font-body); font-size:0.78rem; color:var(--muted); margin-bottom:24px;">Livraison gratuite · Paiement sécurisé</p>
         <button class="btn-primary" style="width:100%; text-align:center; border:none; cursor:pointer;" onclick="checkout()">
           Payer maintenant
         </button>
       </div>
     </div>
 
-    <a href="boutique.html" style="display:inline-block; margin-top:30px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:Inter,sans-serif; letter-spacing:0.1em;">
+    <a href="boutique.html" style="display:inline-block; margin-top:30px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:var(--font-body); letter-spacing:0.1em;">
       ← Continuer mes achats
     </a>
   </div>
@@ -86,7 +87,7 @@ async function loadCart() {
   if (items.error) {
     container.innerHTML = `
       <div style="padding:40px; text-align:center; background:white; border:1px solid var(--border);">
-        <p style="font-family:Inter,sans-serif; color:var(--muted); margin-bottom:16px;">Vous devez être connecté pour voir votre panier.</p>
+        <p style="font-family:var(--font-body); color:var(--muted); margin-bottom:16px;">Vous devez être connecté pour voir votre panier.</p>
         <a href="login.html" class="btn-primary">Se connecter</a>
       </div>`;
     return;
@@ -95,8 +96,8 @@ async function loadCart() {
   if (items.length === 0) {
     container.innerHTML = `
       <div style="padding:60px 40px; text-align:center; background:white; border:1px solid var(--border);">
-        <p style="font-family:'Playfair Display',serif; font-size:1.5rem; margin-bottom:12px;">Votre panier est vide</p>
-        <p style="font-family:Inter,sans-serif; color:var(--muted); margin-bottom:24px;">Découvrez nos collections et ajoutez vos pièces favorites.</p>
+        <p style="font-family:var(--font-title); font-size:1.5rem; margin-bottom:12px;">Votre panier est vide</p>
+        <p style="font-family:var(--font-body); color:var(--muted); margin-bottom:24px;">Découvrez nos collections et ajoutez vos pièces favorites.</p>
         <a href="boutique.html" class="btn-primary">Voir la boutique</a>
       </div>`;
     return;
@@ -113,13 +114,13 @@ async function loadCart() {
         </div>
         <div style="flex:1;">
           <h3 style="font-size:1.1rem; margin-bottom:4px;">${item.name}</h3>
-          <p style="font-family:Inter,sans-serif; font-size:0.85rem; color:var(--muted); margin-bottom:4px;">Quantité : ${item.quantity}</p>
-          <p style="font-family:Inter,sans-serif; font-size:0.82rem; color:var(--muted);">Sous-total : ${(item.price * item.quantity).toFixed(2)} €</p>
+          <p style="font-family:var(--font-body); font-size:0.85rem; color:var(--muted); margin-bottom:4px;">Quantité : ${item.quantity}</p>
+          <p style="font-family:var(--font-body); font-size:0.82rem; color:var(--muted);">Sous-total : ${(item.price * item.quantity).toFixed(2)} €</p>
         </div>
         <div style="text-align:right;">
-          <p style="font-family:'Playfair Display',serif; font-size:1.2rem; margin-bottom:12px;">${item.price} €</p>
+          <p style="font-family:var(--font-title); font-size:1.2rem; margin-bottom:12px;">${item.price} €</p>
           <button onclick="removeItem(${item.id})"
-            style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); background:none; border:none; cursor:pointer; font-family:Inter,sans-serif; transition:color 0.2s;"
+            style="font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); background:none; border:none; cursor:pointer; font-family:var(--font-body); transition:color 0.2s;"
             onmouseover="this.style.color='#e74c3c'"
             onmouseout="this.style.color='var(--muted)'">
             Supprimer

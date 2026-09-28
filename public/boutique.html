@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les F Bijoux — Boutique</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/theme.js"></script>
   <style>
     .boutique-container { max-width: 1100px; margin: 0 auto; padding: 120px 40px 60px; }
     .filters {
@@ -12,7 +13,7 @@
     }
     .filter-btn {
       padding: 10px 22px; border: 1px solid var(--border);
-      background: white; font-family: Inter, sans-serif;
+      background: white; font-family: var(--font-body);
       font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
       cursor: pointer; transition: all 0.2s; color: var(--muted);
     }
@@ -23,15 +24,15 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 30px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
     }
-    .sort-bar p { font-family: Inter, sans-serif; font-size: 0.85rem; color: var(--muted); }
+    .sort-bar p { font-family: var(--font-body); font-size: 0.85rem; color: var(--muted); }
     .sort-bar select {
       padding: 8px 14px; border: 1px solid var(--border);
-      font-family: Inter, sans-serif; font-size: 0.82rem;
+      font-family: var(--font-body); font-size: 0.82rem;
       background: white; cursor: pointer; outline: none; color: var(--foreground);
     }
     .no-results {
       text-align: center; padding: 60px 0;
-      font-family: Inter, sans-serif; color: var(--muted);
+      font-family: var(--font-body); color: var(--muted);
     }
   </style>
 </head>
@@ -88,7 +89,7 @@
   .nav-dropdown-menu a {
     display: block; padding: 10px 20px;
     font-size: 0.82rem; color: var(--muted);
-    text-decoration: none; font-family: Inter, sans-serif;
+    text-decoration: none; font-family: var(--font-body);
   }
   .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
 </style>

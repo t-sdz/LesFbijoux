@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les F Bijoux — Joaillerie</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/theme.js"></script>
   <style>
     .nav-dropdown { position: relative; }
     .nav-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid var(--border); min-width: 160px; z-index: 100; padding: 8px 0; }
     .nav-dropdown:hover .nav-dropdown-menu { display: block; }
-    .nav-dropdown-menu a { display: block; padding: 10px 20px; font-size: 0.82rem; color: var(--muted); text-decoration: none; font-family: Inter, sans-serif; }
+    .nav-dropdown-menu a { display: block; padding: 10px 20px; font-size: 0.82rem; color: var(--muted); text-decoration: none; font-family: var(--font-body); }
     .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
     #fullscreen-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 0.5s ease; z-index: 0; }
     #dark-overlay { position: absolute; inset: 0; background: rgba(31,26,20,0.5); opacity: 0; transition: opacity 0.5s ease; z-index: 1; }
@@ -40,29 +41,29 @@
   </div>
 </nav>
 
-<section class="hero" id="hero">
+<section class="hero" id="hero" data-block="hero">
   <div id="fullscreen-bg"></div>
   <div id="dark-overlay"></div>
   <div class="gallery-grid" id="gallery-grid"></div>
   <div class="hero-content" id="hero-content">
-    <p class="hero-subtitle fade-in">Nouvelle Collection</p>
-    <h1 class="fade-in-delay">L'Art de la<br><em>Joaillerie</em></h1>
-    <p class="fade-in-delay-2">Des pièces uniques, façonnées avec passion pour sublimer chaque instant.</p>
-    <a href="#collections" class="btn-primary fade-in-delay-2">Découvrir</a>
+    <p class="hero-subtitle fade-in" id="hero-subtitle">Nouvelle Collection</p>
+    <h1 class="fade-in-delay" id="hero-title">L'Art de la<br><em>Joaillerie</em></h1>
+    <p class="fade-in-delay-2" id="hero-text">Des pièces uniques, façonnées avec passion pour sublimer chaque instant.</p>
+    <a href="#collections" class="btn-primary fade-in-delay-2" id="hero-button">Découvrir</a>
   </div>
 </section>
 
-<section id="collections" style="background: white;">
+<section id="collections" class="bg-blanc" data-block="collections">
   <div class="text-center">
     <p class="section-label">Explorer</p>
     <h2 class="section-title">Nos Collections</h2>
   </div>
   <div class="collections-grid" id="collections-grid">
-    <p style="font-family:Inter,sans-serif;color:var(--muted);">Chargement...</p>
+    <p style="font-family:var(--font-body);color:var(--muted);">Chargement...</p>
   </div>
 </section>
 
-<section id="products" style="background: #ede8dc;">
+<section id="products" class="bg-alt" data-block="products">
   <div class="text-center">
     <p class="section-label">Sélection</p>
     <h2 class="section-title">Pièces Favorites</h2>
@@ -70,10 +71,10 @@
   <div class="products-grid" id="product-list">Chargement...</div>
 </section>
 
-<section class="newsletter">
+<section class="newsletter" data-block="newsletter">
   <div class="text-center">
     <h2 class="section-title">Restez Inspiré</h2>
-    <p style="color: var(--muted); margin-bottom: 30px; font-family: Inter, sans-serif;">Inscrivez-vous pour recevoir nos nouveautés et offres exclusives.</p>
+    <p style="color: var(--muted); margin-bottom: 30px; font-family: var(--font-body);">Inscrivez-vous pour recevoir nos nouveautés et offres exclusives.</p>
     <div class="newsletter-form">
       <input type="email" placeholder="Votre adresse email">
       <button>S'inscrire</button>
@@ -171,7 +172,7 @@ async function loadCollections() {
     const collections = await res.json();
     const grid = document.getElementById('collections-grid');
     if (!grid) return;
-    if (collections.length === 0) { grid.innerHTML = '<p style="font-family:Inter,sans-serif;color:var(--muted);">Aucune collection.</p>'; return; }
+    if (collections.length === 0) { grid.innerHTML = '<p style="font-family:var(--font-body);color:var(--muted);">Aucune collection.</p>'; return; }
     grid.innerHTML = collections.map(c => `
       <div class="collection-card" onclick="window.location.href='collection.html?category=${encodeURIComponent(c.name)}'" style="cursor:pointer;position:relative;">
         <img src="../images/${c.image}" alt="${c.name}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">

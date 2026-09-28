@@ -56,11 +56,13 @@ const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const adminRoutes = require('./routes/admin');
+const settingsRoutes = require('./routes/settings');
 
 app.use('/auth', authRoutes);
 app.use('/products', productRoutes);
 app.use('/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/settings', settingsRoutes);
 
 // Routes pages
 const pages = ['index', 'login', 'register', 'cart', 'admin', 'collection', 'boutique', 'produit', 'confirmation'];

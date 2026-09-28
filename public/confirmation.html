@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Les F Bijoux — Commande confirmée</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/theme.js"></script>
   <style>
     .nav-dropdown { position: relative; }
     .nav-dropdown-menu {
@@ -16,7 +17,7 @@
     .nav-dropdown-menu a {
       display: block; padding: 10px 20px;
       font-size: 0.82rem; color: var(--muted);
-      text-decoration: none; font-family: Inter, sans-serif;
+      text-decoration: none; font-family: var(--font-body);
     }
     .nav-dropdown-menu a:hover { color: var(--gold); background: var(--cream); }
     .confirmation-page {
@@ -49,7 +50,7 @@
       color: var(--foreground);
     }
     .confirmation-box .subtitle {
-      font-family: Inter, sans-serif;
+      font-family: var(--font-body);
       font-size: 0.92rem;
       color: var(--muted);
       line-height: 1.7;
@@ -71,7 +72,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: Inter, sans-serif;
+      font-family: var(--font-body);
       font-size: 0.85rem;
     }
     .confirmation-detail span:first-child { color: var(--muted); }
@@ -89,7 +90,7 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       text-decoration: none;
-      font-family: Inter, sans-serif;
+      font-family: var(--font-body);
       color: var(--muted);
       transition: all 0.2s;
       cursor: pointer;
