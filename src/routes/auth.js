@@ -1,6 +1,7 @@
 const express = require('express');
 const { z } = require('zod');
 const authService = require('../services/authService');
+const { setAuthCookie, clearAuthCookie } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const loginSchema = z.object({
 router.post('/register', async (req, res) => {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const { email, password } = parsed.data;
     try {
@@ -33,7 +34,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const { email, password } = parsed.data;
     try {
@@ -42,16 +43,17 @@ router.post('/login', async (req, res) => {
         if (!authService.verifyPassword(password, user.password))
             return res.status(400).json({ error: 'Mot de passe incorrect' });
 
-        req.session.userId = Number(user.id);
-        req.session.isAdmin = user.is_admin === 1;
-        res.json({ message: 'Connecté', userId: Number(user.id), isAdmin: user.is_admin === 1 });
+        const isAdmin = user.is_admin === 1;
+        setAuthCookie(res, { userId: Number(user.id), isAdmin });
+        res.json({ message: 'Connecté', userId: Number(user.id), isAdmin });
     } catch (err) {
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
 
 router.post('/logout', (req, res) => {
-    req.session.destroy(() => res.json({ message: 'Déconnecté' }));
+    clearAuthCookie(res);
+    res.json({ message: 'Déconnecté' });
 });
 
 router.get('/me', async (req, res) => {

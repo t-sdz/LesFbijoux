@@ -84,7 +84,7 @@ router.get('/products', isAdmin, async (req, res) => {
 router.post('/products', isAdmin, upload.single('image'), async (req, res) => {
     const parsed = productSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const { name, description, price, category } = parsed.data;
     const image = req.file ? req.file.filename : 'default.jpg';
@@ -101,7 +101,7 @@ router.post('/products', isAdmin, upload.single('image'), async (req, res) => {
 router.put('/products/:id', isAdmin, upload.single('image'), async (req, res) => {
     const parsed = productSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const { name, description, price, category } = parsed.data;
     try {
@@ -158,7 +158,7 @@ router.get('/collections', isAdmin, async (req, res) => {
 router.post('/collections', isAdmin, upload.single('image'), async (req, res) => {
     const parsed = collectionSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     const image = req.file ? req.file.filename : 'default.jpg';
     try {
@@ -174,7 +174,7 @@ router.post('/collections', isAdmin, upload.single('image'), async (req, res) =>
 router.put('/collections/:id', isAdmin, upload.single('image'), async (req, res) => {
     const parsed = collectionSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     try {
         const image = req.file

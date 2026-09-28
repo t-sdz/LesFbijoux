@@ -27,7 +27,7 @@ router.get('/', isAuthenticated, async (req, res) => {
 router.post('/', isAuthenticated, async (req, res) => {
     const parsed = addToCartSchema.safeParse(req.body);
     if (!parsed.success)
-        return res.status(400).json({ error: parsed.error.errors[0].message });
+        return res.status(400).json({ error: parsed.error.issues[0].message });
 
     try {
         const action = await cartService.addOrIncrement(req.session.userId, parsed.data.product_id);

@@ -1,13 +1,17 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
-const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const { sessionFromToken } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Vercel est devant l'app : l'IP réelle du visiteur arrive via X-Forwarded-For
+app.set('trust proxy', 1);
 
 // Security headers (CSP, HSTS, X-Content-Type-Options, etc.)
 app.use(helmet({
@@ -31,24 +35,15 @@ app.use(cors({ origin: process.env.BASE_URL || 'http://localhost:3000', credenti
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Sessions
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET || 'fallback_secret',
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            httpOnly: true,
-        },
-    })
-);
+// Authentification sans état : cookie JWT signé (compatible serverless / Vercel)
+app.use(cookieParser());
+app.use(sessionFromToken);
 
-// Rate limiting sur le login — max 10 tentatives par 15 minutes
+// Rate limiting sur le login — max 10 échecs par IP et par 15 minutes
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
+    skipSuccessfulRequests: true,
     message: { error: 'Trop de tentatives, réessayez dans 15 minutes.' }
 });
 app.use('/auth/login', loginLimiter);
