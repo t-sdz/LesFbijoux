@@ -48,7 +48,19 @@ const collectionSchema = z.object({
     name: z.string().min(1, 'Nom de collection requis').max(100),
 });
 
-const fontName = z.enum(settingsService.FONTS.map(f => f.name));
+const fontName = z.string().min(1).max(40);
+const idOrder = z.array(z.number().int().positive()).max(2000);
+const customFontSchema = z.object({
+    name: z.string().trim()
+        .min(1, 'Donne un nom à la police')
+        .max(40, 'Nom de police trop long (40 caractères max.)')
+        .regex(/^[A-Za-zÀ-ÿ0-9 _-]+$/, 'Nom de police : lettres, chiffres, espaces, - et _ uniquement'),
+});
+
+const fontUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 },
+});
 const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Couleur invalide');
 const blockBackground = z.enum(['site', 'alt', 'blanc']);
 const blockColumns = z.enum(['auto', '2', '3', '4']);
@@ -76,6 +88,8 @@ const settingsSchema = z.object({
         blocks => new Set(blocks.map(b => b.id)).size === 4,
         'Chaque bloc doit apparaître une seule fois'
     ),
+    productOrder: idOrder.default([]),
+    collectionOrder: idOrder.default([]),
 });
 
 // ─── MIDDLEWARE ADMIN ─────────────────────────────────────────────────────────
@@ -260,8 +274,55 @@ router.put('/settings', isAdmin, async (req, res) => {
         return res.status(400).json({ error: parsed.error.issues[0].message });
 
     try {
+        const available = (await settingsService.getFontOptions()).map(f => f.name);
+        if (!available.includes(parsed.data.fonts.title) || !available.includes(parsed.data.fonts.body))
+            return res.status(400).json({ error: 'Police inconnue' });
         await settingsService.saveSettings(parsed.data);
         res.json({ message: 'Apparence enregistrée !', settings: parsed.data });
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// Import d'une police personnelle (.woff2, .woff, .ttf, .otf — 2 Mo max.)
+router.post('/fonts', isAdmin, (req, res, next) => {
+    fontUpload.single('font')(req, res, err => {
+        if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Fichier trop lourd (2 Mo max.)' : 'Fichier invalide' });
+        next();
+    });
+}, async (req, res) => {
+    const parsed = customFontSchema.safeParse(req.body);
+    if (!parsed.success)
+        return res.status(400).json({ error: parsed.error.issues[0].message });
+    if (!req.file)
+        return res.status(400).json({ error: 'Choisis un fichier de police' });
+
+    const format = settingsService.detectFontFormat(req.file.buffer);
+    if (!format)
+        return res.status(400).json({ error: 'Ce fichier n\'est pas une police (.woff2, .woff, .ttf ou .otf)' });
+
+    const name = parsed.data.name;
+    try {
+        const existing = await settingsService.getFontOptions();
+        if (existing.some(f => f.name.toLowerCase() === name.toLowerCase()))
+            return res.status(400).json({ error: 'Une police porte déjà ce nom' });
+        const id = await settingsService.addCustomFont(name, format.mime, req.file.buffer);
+        res.json({ message: 'Police importée !', font: { id, name } });
+    } catch (err) {
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+router.delete('/fonts/:id', isAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    try {
+        const font = (await settingsService.listCustomFonts()).find(f => f.id === id);
+        if (!font) return res.status(404).json({ error: 'Police introuvable' });
+        const { fonts } = await settingsService.getSettings();
+        if (fonts.title === font.name || fonts.body === font.name)
+            return res.status(400).json({ error: 'Cette police est utilisée sur le site : choisis-en une autre et enregistre avant de la supprimer' });
+        await settingsService.deleteCustomFont(id);
+        res.json({ message: 'Police supprimée' });
     } catch (err) {
         res.status(500).json({ error: 'Erreur serveur' });
     }

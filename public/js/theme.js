@@ -4,6 +4,9 @@
     const CACHE_KEY = 'site-apparence';
     const DEFAULT_FONTS = ['Playfair Display', 'Inter'];
     const root = document.documentElement;
+    // Page ouverte dans l'aperçu de l'admin (?apercu) : elle affiche les réglages en cours d'édition
+    const PREVIEW = new URLSearchParams(location.search).has('apercu');
+    let previewSettings = null;
     let fonts = [];
 
     // Assombrit une couleur #rrggbb (amount entre 0 et 1)
@@ -18,20 +21,41 @@
         return font ? `'${font.name}', ${font.fallback}` : null;
     }
 
+    // Polices Google (lien vers fonts.googleapis.com) et polices importées (@font-face servies par le site)
     function loadFonts(names) {
-        const toLoad = [...new Set(names)].filter(n => fonts.some(f => f.name === n) && !DEFAULT_FONTS.includes(n));
+        const wanted = [...new Set(names)].map(n => fonts.find(f => f.name === n)).filter(Boolean);
+
+        const google = wanted.filter(f => !f.url && !DEFAULT_FONTS.includes(f.name));
         let link = document.getElementById('theme-fonts');
-        if (toLoad.length === 0) { if (link) link.remove(); return; }
-        const href = 'https://fonts.googleapis.com/css2?'
-            + toLoad.map(n => 'family=' + n.replace(/ /g, '+') + ':ital,wght@0,400;0,600;1,400').join('&')
-            + '&display=swap';
-        if (!link) {
-            link = document.createElement('link');
-            link.id = 'theme-fonts';
-            link.rel = 'stylesheet';
-            document.head.appendChild(link);
+        if (google.length === 0) {
+            if (link) link.remove();
+        } else {
+            const href = 'https://fonts.googleapis.com/css2?'
+                + google.map(f => 'family=' + f.name.replace(/ /g, '+') + ':ital,wght@0,400;0,600;1,400').join('&')
+                + '&display=swap';
+            if (!link) {
+                link = document.createElement('link');
+                link.id = 'theme-fonts';
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+            if (link.href !== href) link.href = href;
         }
-        if (link.href !== href) link.href = href;
+
+        const custom = wanted.filter(f => f.url);
+        let style = document.getElementById('theme-custom-fonts');
+        if (custom.length === 0) {
+            if (style) style.remove();
+        } else {
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'theme-custom-fonts';
+                document.head.appendChild(style);
+            }
+            style.textContent = custom
+                .map(f => `@font-face { font-family: '${f.name}'; src: url('${f.url}'); font-display: swap; }`)
+                .join('\n');
+        }
     }
 
     function applyStyle(s) {
@@ -89,6 +113,21 @@
         });
     }
 
+    // Ordre des produits et des collections (les cartes portent data-id)
+    function sortCards(selector, order) {
+        const box = document.querySelector(selector);
+        if (!box || !Array.isArray(order)) return;
+        const rank = id => { const i = order.indexOf(id); return i === -1 ? order.length + id : i; };
+        [...box.querySelectorAll(':scope > [data-id]')]
+            .sort((a, b) => rank(Number(a.dataset.id)) - rank(Number(b.dataset.id)))
+            .forEach(card => box.appendChild(card));
+    }
+
+    function applyOrder(s) {
+        sortCards('#product-list', s.productOrder);
+        sortCards('#collections-grid', s.collectionOrder);
+    }
+
     function onReady(fn) {
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
         else fn();
@@ -96,7 +135,7 @@
 
     function apply(settings) {
         applyStyle(settings);
-        onReady(() => { applyTexts(settings); applyBlocks(settings); });
+        onReady(() => { applyTexts(settings); applyBlocks(settings); if (PREVIEW) applyOrder(settings); });
     }
 
     function remember(data) {
@@ -109,9 +148,6 @@
         if (cached && cached.settings) { fonts = cached.fonts || []; apply(cached.settings); }
     } catch (e) { /* cache absent ou illisible */ }
 
-    // Page ouverte dans l'aperçu de l'admin (?apercu) : elle affiche les réglages en cours d'édition
-    const PREVIEW = new URLSearchParams(location.search).has('apercu');
-    let previewSettings = null;
 
     // 2. Apparence à jour depuis le serveur (jamais depuis un cache HTTP)
     const ready = fetch('/settings', { cache: 'no-store' })
@@ -124,11 +160,22 @@
         })
         .catch(() => null);
 
+    // Dans l'aperçu : glisser-déposer des produits et collections, liens désactivés
+    if (PREVIEW) {
+        const script = document.createElement('script');
+        script.src = '../js/apercu.js';
+        document.head.appendChild(script);
+    }
+
     window.SiteTheme = {
         ready,
         apply,
         // Aperçu de l'admin : affiche des réglages non enregistrés sans les mémoriser
-        preview(settings) { previewSettings = settings; apply(settings); },
+        preview(settings, fontList) { if (fontList) fonts = fontList; previewSettings = settings; apply(settings); },
+        // Liste des polices à jour (après un import dans l'admin)
+        setFonts(fontList) { fonts = fontList; },
+        // Aperçu : remet les cartes dans l'ordre en cours d'édition (appelé quand elles arrivent)
+        reorder() { if (previewSettings) applyOrder(previewSettings); },
         // Mémorise l'apparence enregistrée pour les prochaines pages
         save(settings) { remember({ settings, fonts }); },
     };

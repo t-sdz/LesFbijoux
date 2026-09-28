@@ -1,8 +1,13 @@
 const db = require('../db/database');
+const settingsService = require('./settingsService');
 
+// Produits dans l'ordre choisi par l'admin (onglet Apparence)
 async function getAll() {
-    const result = await db.execute('SELECT * FROM products');
-    return result.rows;
+    const [result, settings] = await Promise.all([
+        db.execute('SELECT * FROM products'),
+        settingsService.getSettings(),
+    ]);
+    return settingsService.sortByOrder(result.rows, settings.productOrder);
 }
 
 async function getById(id) {
@@ -21,8 +26,11 @@ async function getCategories() {
 }
 
 async function getCollections() {
-    const result = await db.execute('SELECT * FROM collections ORDER BY id');
-    return result.rows;
+    const [result, settings] = await Promise.all([
+        db.execute('SELECT * FROM collections ORDER BY id'),
+        settingsService.getSettings(),
+    ]);
+    return settingsService.sortByOrder(result.rows, settings.collectionOrder);
 }
 
 async function getHeroImages() {
