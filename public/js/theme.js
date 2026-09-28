@@ -109,13 +109,17 @@
         if (cached && cached.settings) { fonts = cached.fonts || []; apply(cached.settings); }
     } catch (e) { /* cache absent ou illisible */ }
 
-    // 2. Apparence à jour depuis le serveur
-    const ready = fetch('/settings')
+    // Page ouverte dans l'aperçu de l'admin (?apercu) : elle affiche les réglages en cours d'édition
+    const PREVIEW = new URLSearchParams(location.search).has('apercu');
+    let previewSettings = null;
+
+    // 2. Apparence à jour depuis le serveur (jamais depuis un cache HTTP)
+    const ready = fetch('/settings', { cache: 'no-store' })
         .then(res => (res.ok ? res.json() : Promise.reject(new Error('HTTP ' + res.status))))
         .then(data => {
             fonts = data.fonts;
-            apply(data.settings);
-            remember({ settings: data.settings, fonts: data.fonts });
+            apply(previewSettings || data.settings);
+            if (!PREVIEW) remember({ settings: data.settings, fonts: data.fonts });
             return data;
         })
         .catch(() => null);
@@ -123,6 +127,8 @@
     window.SiteTheme = {
         ready,
         apply,
+        // Aperçu de l'admin : affiche des réglages non enregistrés sans les mémoriser
+        preview(settings) { previewSettings = settings; apply(settings); },
         // Mémorise l'apparence enregistrée pour les prochaines pages
         save(settings) { remember({ settings, fonts }); },
     };

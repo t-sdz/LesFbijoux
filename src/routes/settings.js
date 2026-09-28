@@ -5,6 +5,7 @@ const router = express.Router();
 
 // Apparence du site (publique : chaque page en a besoin pour s'afficher)
 router.get('/', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         res.json({
             settings: await settingsService.getSettings(),
