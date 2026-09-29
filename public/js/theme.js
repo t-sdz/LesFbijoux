@@ -128,6 +128,62 @@
         sortCards('#collections-grid', s.collectionOrder);
     }
 
+    // Textes modifiables (data-edit="clé") : texte choisi dans l'admin, sinon texte d'origine de la page
+    let currentSettings = null;
+    function applyEditableTexts(root) {
+        if (!currentSettings) return;
+        const texts = currentSettings.texts || {};
+        root.querySelectorAll('[data-edit]').forEach(el => {
+            if (el.dataset.orig === undefined) el.dataset.orig = el.textContent.trim();
+            const value = texts[el.dataset.edit];
+            el.textContent = typeof value === 'string' && value.trim() !== '' ? value : el.dataset.orig;
+        });
+    }
+
+    // Entrées du menu et colonnes du pied de page affichées ou masquées
+    function applyMenuFooter(s) {
+        document.querySelectorAll('[data-nav]').forEach(el => {
+            el.classList.toggle('nav-hidden', s.menu && s.menu[el.dataset.nav] === false);
+        });
+        document.querySelectorAll('footer').forEach(el => el.classList.toggle('footer-hidden', s.footer && s.footer.visible === false));
+        document.querySelectorAll('[data-footer-col]').forEach(el => {
+            el.classList.toggle('footer-hidden', !!(s.footer && s.footer.columns && s.footer.columns[el.dataset.footerCol] === false));
+        });
+    }
+
+    // Mise en page propre à chaque page (<body data-page="...">)
+    function applyPage(s) {
+        const page = document.body.dataset.page;
+        const key = page === 'inscription' ? 'connexion' : page;
+        const conf = s.pages && s.pages[key];
+        if (!conf) return;
+        const body = document.body;
+        [...body.classList].filter(c => /^(cols|bg)-/.test(c)).forEach(c => body.classList.remove(c));
+        if (conf.columns && conf.columns !== 'auto') body.classList.add('cols-' + conf.columns);
+        if (conf.background) body.classList.add('bg-' + conf.background);
+        const product = document.getElementById('product-page');
+        if (page === 'produit' && product) {
+            product.classList.toggle('img-droite', conf.imageSide === 'droite');
+            product.classList.toggle('img-petite', conf.imageSize === 'petite');
+            product.classList.toggle('img-grande', conf.imageSize === 'grande');
+            product.classList.toggle('sans-description', conf.showDescription === false);
+        }
+    }
+
+    // Les textes ajoutés plus tard (fiche produit, etc.) reçoivent aussi le bon texte
+    let textObserver = null;
+    function watchNewTexts() {
+        if (textObserver) return;
+        textObserver = new MutationObserver(mutations => {
+            mutations.forEach(m => m.addedNodes.forEach(node => {
+                if (node.nodeType !== 1) return;
+                if (node.matches('[data-edit]') && node.dataset.orig === undefined) applyEditableTexts(node.parentNode);
+                else if (node.querySelector('[data-edit]:not([data-orig])')) applyEditableTexts(node);
+            }));
+        });
+        textObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
     function onReady(fn) {
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
         else fn();
@@ -135,7 +191,16 @@
 
     function apply(settings) {
         applyStyle(settings);
-        onReady(() => { applyTexts(settings); applyBlocks(settings); if (PREVIEW) applyOrder(settings); });
+        currentSettings = settings;
+        onReady(() => {
+            applyTexts(settings);
+            applyEditableTexts(document);
+            applyMenuFooter(settings);
+            applyPage(settings);
+            applyBlocks(settings);
+            if (PREVIEW) applyOrder(settings);
+            watchNewTexts();
+        });
     }
 
     function remember(data) {

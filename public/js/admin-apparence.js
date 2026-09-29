@@ -15,6 +15,12 @@ const PRESETS = [
 ];
 let appearance = null, appearanceSaved = null, appearanceDefaults = null, fontOptions = [];
 let appearanceDirty = false, dragIndex = null;
+const PREVIEW_PAGES = { accueil: 'Accueil', boutique: 'Boutique', collection: "Page d'une collection", produit: 'Fiche produit', panier: 'Panier', confirmation: 'Confirmation de commande', connexion: 'Connexion', inscription: 'Inscription' };
+const MENU_LABELS = { accueil: 'Accueil', boutique: 'Boutique', collections: 'Collections', panier: 'Panier', compte: 'Connexion / Déconnexion' };
+const FOOTER_COLUMNS = { boutique: 'Colonne « Boutique »', apropos: 'Colonne « À propos »', service: 'Colonne « Service »' };
+const IMAGE_SIDE = { gauche: 'Photo à gauche', droite: 'Photo à droite' };
+const IMAGE_SIZE = { petite: 'Photo petite', moyenne: 'Photo moyenne', grande: 'Photo grande' };
+let textCatalog = [], previewPage = 'accueil', allProductIds = [], allCollectionIds = [], previewTargets = {};
 
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const getPath = (obj, path) => path.split('.').reduce((o, k) => o[k], obj);
@@ -77,7 +83,9 @@ async function loadAppearance() {
   if (!res.ok) { alert("Impossible de charger l'apparence."); return; }
   const data = await res.json();
   fontOptions = data.fonts;
+  textCatalog = data.catalog || [];
   appearanceDefaults = data.defaults;
+  await loadPreviewTargets();
   appearanceSaved = clone(data.settings);
   appearance = clone(data.settings);
   appearanceDirty = false;
@@ -93,6 +101,11 @@ function renderAppearance() {
   document.querySelectorAll('#tab-appearance [data-code]').forEach(code => { code.textContent = getPath(appearance, code.dataset.code); });
   renderPresets();
   renderBlocks();
+  renderPageCard();
+  renderMenuFooter();
+  const common = document.getElementById('ap-common-texts');
+  common.innerHTML = '';
+  renderTextInputs('commun', common);
   SiteTheme.apply(appearance);
   pushPreview();
 }
@@ -172,11 +185,144 @@ async function deleteFont(font) {
 }
 
 // L'aperçu nous prévient quand un produit ou une collection a été glissé à une autre place
+// L'aperçu nous prévient quand un produit ou une collection a été glissé à une autre place.
+// Sur une page qui n'en montre qu'une partie (une collection), on garde la place des autres.
+function effectiveOrder(ids, order) {
+  const rank = id => { const i = order.indexOf(id); return i === -1 ? order.length + id : i; };
+  return [...ids].sort((a, b) => rank(a) - rank(b));
+}
+function mergeOrder(full, moved) {
+  const set = new Set(moved);
+  let k = 0;
+  return full.map(id => (set.has(id) ? moved[k++] : id));
+}
 window.onPreviewReorder = (kind, ids) => {
   if (!appearance) return;
-  appearance[kind === 'products' ? 'productOrder' : 'collectionOrder'] = ids;
+  if (kind === 'products') appearance.productOrder = mergeOrder(effectiveOrder(allProductIds, appearance.productOrder), ids);
+  else appearance.collectionOrder = mergeOrder(effectiveOrder(allCollectionIds, appearance.collectionOrder), ids);
   appearanceChanged();
 };
+
+// ── Aperçu des autres pages
+async function loadPreviewTargets() {
+  const [products, collections] = await Promise.all([
+    fetch('/products').then(r => (r.ok ? r.json() : [])).catch(() => []),
+    fetch('/products/collections').then(r => (r.ok ? r.json() : [])).catch(() => []),
+  ]);
+  allProductIds = products.map(p => Number(p.id));
+  allCollectionIds = collections.map(c => Number(c.id));
+  const withCategory = products.find(p => p.category);
+  previewTargets = { productId: products[0] && products[0].id, category: withCategory && withCategory.category };
+  const select = document.getElementById('ap-page');
+  if (!select.options.length) Object.entries(PREVIEW_PAGES).forEach(([v, label]) => select.add(new Option(label, v)));
+  select.value = previewPage;
+}
+
+function previewUrl(page) {
+  const urls = {
+    accueil: 'index.html', boutique: 'boutique.html', panier: 'cart.html', confirmation: 'confirmation.html',
+    connexion: 'login.html', inscription: 'register.html',
+    collection: 'collection.html?category=' + encodeURIComponent(previewTargets.category || ''),
+    produit: 'produit.html?id=' + (previewTargets.productId || ''),
+  };
+  const url = urls[page];
+  return url + (url.includes('?') ? '&' : '?') + 'apercu=1';
+}
+
+function setPreviewPage(page) {
+  previewPage = page;
+  document.getElementById('ap-page').value = page;
+  document.getElementById('ap-frame').setAttribute('src', previewUrl(page));
+  renderPageCard();
+}
+
+function makeCheckbox(label, checked, onChange) {
+  const wrap = document.createElement('label');
+  const box = document.createElement('input');
+  box.type = 'checkbox';
+  box.checked = checked;
+  box.onchange = () => { onChange(box.checked); appearanceChanged(); };
+  wrap.append(box, ' ' + label);
+  return wrap;
+}
+
+function hint(text) {
+  const p = document.createElement('p');
+  p.className = 'ap-hint';
+  p.textContent = text;
+  return p;
+}
+
+// Textes modifiables d'une page : on écrit directement le texte voulu (vide = texte d'origine)
+function renderTextInputs(pageKey, container) {
+  const group = textCatalog.find(g => g.page === pageKey);
+  if (!group) return;
+  group.items.forEach(item => {
+    const wrap = document.createElement('div');
+    wrap.className = 'form-group';
+    const label = document.createElement('label');
+    label.textContent = item.label;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = 300;
+    input.placeholder = item.default || '(vide)';
+    input.value = appearance.texts[item.key] !== undefined ? appearance.texts[item.key] : item.default;
+    input.oninput = () => {
+      if (input.value === item.default || input.value.trim() === '') delete appearance.texts[item.key];
+      else appearance.texts[item.key] = input.value;
+      appearanceChanged();
+    };
+    wrap.append(label, input);
+    container.append(wrap);
+  });
+}
+
+// Carte « Page : … » : réglages et textes de la page affichée dans l'aperçu
+function renderPageCard() {
+  if (!appearance) return;
+  const card = document.getElementById('ap-page-card');
+  card.innerHTML = '';
+  const title = document.createElement('h4');
+  title.textContent = 'Page : ' + PREVIEW_PAGES[previewPage];
+  card.append(title);
+  document.getElementById('ap-blocks-card').style.display = previewPage === 'accueil' ? '' : 'none';
+
+  if (previewPage === 'accueil') card.append(hint("La bannière, l'ordre et la forme des blocs se règlent dans « Nom et textes » et « Blocs de la page d'accueil ». Glisse les produits et collections dans l'aperçu pour changer leur place."));
+  if (previewPage === 'boutique' || previewPage === 'collection') card.append(hint("Glisse les produits dans l'aperçu pour changer leur place (c'est le même ordre partout)."));
+  if (previewPage === 'connexion' || previewPage === 'inscription') card.append(hint('Le fond est commun aux pages Connexion et Inscription.'));
+
+  const conf = appearance.pages[previewPage === 'inscription' ? 'connexion' : previewPage];
+  if (conf) {
+    const row = document.createElement('div');
+    row.className = 'ap-checks';
+    if ('columns' in conf) row.append(makeSelect(COLUMN_OPTIONS, conf.columns, v => { conf.columns = v; }));
+    if ('background' in conf) row.append(makeSelect(BACKGROUND_OPTIONS, conf.background, v => { conf.background = v; }));
+    if ('imageSide' in conf) row.append(makeSelect(IMAGE_SIDE, conf.imageSide, v => { conf.imageSide = v; }));
+    if ('imageSize' in conf) row.append(makeSelect(IMAGE_SIZE, conf.imageSize, v => { conf.imageSize = v; }));
+    if ('showDescription' in conf) row.append(makeCheckbox('Afficher la description', conf.showDescription, v => { conf.showDescription = v; }));
+    card.append(row);
+  }
+  const texts = document.createElement('div');
+  texts.style.marginTop = '18px';
+  card.append(texts);
+  renderTextInputs(previewPage, texts);
+}
+
+function renderMenuFooter() {
+  const menu = document.getElementById('ap-menu');
+  menu.innerHTML = '';
+  menu.append(hint('Menu :'));
+  Object.entries(MENU_LABELS).forEach(([key, label]) => {
+    menu.append(makeCheckbox(label, appearance.menu[key] !== false, v => { appearance.menu[key] = v; }));
+  });
+  const footer = document.getElementById('ap-footer');
+  footer.innerHTML = '';
+  footer.append(hint('Pied de page :'));
+  footer.append(makeCheckbox('Afficher le pied de page', appearance.footer.visible, v => { appearance.footer.visible = v; }));
+  Object.entries(FOOTER_COLUMNS).forEach(([key, label]) => {
+    footer.append(makeCheckbox(label, appearance.footer.columns[key] !== false, v => { appearance.footer.columns[key] = v; }));
+  });
+}
 
 function renderPresets() {
   const box = document.getElementById('ap-presets');

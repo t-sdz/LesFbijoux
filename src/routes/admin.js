@@ -90,6 +90,28 @@ const settingsSchema = z.object({
     ),
     productOrder: idOrder.default([]),
     collectionOrder: idOrder.default([]),
+    texts: z.record(z.string(), z.string().max(300, 'Texte trop long (300 caractères max.)'))
+        .refine(texts => Object.keys(texts).every(k => settingsService.TEXT_KEYS.includes(k)), 'Texte inconnu')
+        .default({}),
+    menu: z.object({
+        accueil: z.boolean(), boutique: z.boolean(), collections: z.boolean(), panier: z.boolean(), compte: z.boolean(),
+    }).default(settingsService.DEFAULTS.menu),
+    footer: z.object({
+        visible: z.boolean(),
+        columns: z.object({ boutique: z.boolean(), apropos: z.boolean(), service: z.boolean() }),
+    }).default(settingsService.DEFAULTS.footer),
+    pages: z.object({
+        boutique: z.object({ columns: blockColumns, background: blockBackground }),
+        collection: z.object({ columns: blockColumns, background: blockBackground }),
+        produit: z.object({
+            imageSide: z.enum(['gauche', 'droite']),
+            imageSize: z.enum(['petite', 'moyenne', 'grande']),
+            showDescription: z.boolean(),
+        }),
+        panier: z.object({ background: blockBackground }),
+        confirmation: z.object({ background: blockBackground }),
+        connexion: z.object({ background: blockBackground }),
+    }).default(settingsService.DEFAULTS.pages),
 });
 
 // ─── MIDDLEWARE ADMIN ─────────────────────────────────────────────────────────

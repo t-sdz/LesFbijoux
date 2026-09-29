@@ -413,15 +413,32 @@ footer {
 .hero.size-moyen   { min-height: 70vh; }
 .hero.size-compact { min-height: 50vh; }
 
-section.bg-site  { background: var(--cream); }
-section.bg-alt   { background: var(--cream-dark); }
-section.bg-blanc { background: #fff; }
+.bg-site  { background: var(--cream); }
+.bg-alt   { background: var(--cream-dark); }
+.bg-blanc { background: #fff; }
 
-section.cols-2 .products-grid, section.cols-2 .collections-grid { grid-template-columns: repeat(2, 1fr); }
-section.cols-3 .products-grid, section.cols-3 .collections-grid { grid-template-columns: repeat(3, 1fr); }
-section.cols-4 .products-grid, section.cols-4 .collections-grid { grid-template-columns: repeat(4, 1fr); }
+.cols-2 .products-grid, .cols-2 .collections-grid { grid-template-columns: repeat(2, 1fr); }
+.cols-3 .products-grid, .cols-3 .collections-grid { grid-template-columns: repeat(3, 1fr); }
+.cols-4 .products-grid, .cols-4 .collections-grid { grid-template-columns: repeat(4, 1fr); }
+
+/* ── RÉGLAGES DES AUTRES PAGES (onglet Apparence) ───────────────────────────── */
+.nav-hidden, .footer-hidden { display: none !important; }
+footer { width: 100%; }
+
+.product-page.img-droite .product-image-box { order: 2; }
+.product-page.img-petite { grid-template-columns: 2fr 3fr; }
+.product-page.img-grande { grid-template-columns: 3fr 2fr; }
+.product-page.img-droite.img-petite { grid-template-columns: 3fr 2fr; }
+.product-page.img-droite.img-grande { grid-template-columns: 2fr 3fr; }
+.product-page.sans-description .description { display: none; }
 
 @media (max-width: 700px) {
-  section.cols-3 .products-grid, section.cols-4 .products-grid { grid-template-columns: repeat(2, 1fr); }
-  section.cols-2 .collections-grid, section.cols-3 .collections-grid, section.cols-4 .collections-grid { grid-template-columns: 1fr; }
+  .cols-3 .products-grid, .cols-4 .products-grid { grid-template-columns: repeat(2, 1fr); }
+  .cols-2 .collections-grid, .cols-3 .collections-grid, .cols-4 .collections-grid { grid-template-columns: 1fr; }
+  .product-page.img-petite, .product-page.img-grande,
+  .product-page.img-droite.img-petite, .product-page.img-droite.img-grande { grid-template-columns: 1fr; }
+  .product-page.img-droite .product-image-box { order: 0; }
+  /* Menu sur plusieurs lignes : sinon les derniers liens sortent de l'écran */
+  nav { padding: 12px 16px; flex-wrap: wrap; row-gap: 6px; }
+  .nav-links { gap: 14px; flex-wrap: wrap; row-gap: 6px; }
 }

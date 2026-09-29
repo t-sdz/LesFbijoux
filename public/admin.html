@@ -119,6 +119,9 @@
     .block-move:disabled { opacity: 0.3; cursor: default; }
     .ap-actions { position: sticky; bottom: 0; background: var(--cream); padding: 16px 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--border); }
     .ap-status { font-family: var(--font-body); font-size: 0.8rem; color: var(--muted); }
+    .ap-checks { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-family: var(--font-body); font-size: 0.85rem; }
+    .ap-checks label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .ap-checks select { padding: 6px 8px; border: 1px solid var(--border); font-family: var(--font-body); font-size: 0.8rem; background: white; }
     .ap-import { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 8px; }
     .ap-import-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .ap-import-row input[type=text] { flex: 1; min-width: 160px; padding: 10px 12px; border: 1px solid var(--border); font-family: var(--font-body); font-size: 0.85rem; }
@@ -220,6 +223,7 @@
     <p class="ap-hint" style="margin-bottom:24px;">Les couleurs et les polices s'appliquent tout de suite sur cette page pour que tu voies le résultat. Les clients ne voient rien tant que tu n'as pas cliqué sur « Enregistrer ».</p>
     <div class="ap-layout">
       <div>
+        <div class="ap-card" id="ap-page-card"></div>
         <div class="ap-card">
           <h4>Nom et textes</h4>
           <div class="form-group"><label>Nom de la boutique</label><input type="text" maxlength="60" data-path="siteName"></div>
@@ -260,15 +264,27 @@
           <div class="color-row"><input type="color" data-path="colors.text"><span>Texte</span><code data-code="colors.text"></code></div>
           <div class="color-row"><input type="color" data-path="colors.accent"><span>Accent (boutons, liens, prix)</span><code data-code="colors.accent"></code></div>
         </div>
-        <div class="ap-card">
+        <div class="ap-card" id="ap-blocks-card">
           <h4>Blocs de la page d'accueil</h4>
           <p class="ap-hint">Glisse un bloc avec ⠿ (ou utilise les flèches) pour changer sa place. Décoche « Afficher » pour le masquer.</p>
           <div class="block-list" id="ap-blocks"></div>
         </div>
+        <div class="ap-card">
+          <h4>Menu et pied de page</h4>
+          <p class="ap-hint">Sur toutes les pages. Décoche ce que tu veux masquer.</p>
+          <div class="ap-checks" id="ap-menu"></div>
+          <div class="ap-checks" id="ap-footer" style="margin-top:14px;"></div>
+          <details style="margin-top:16px;">
+            <summary class="ap-hint" style="cursor:pointer; margin:0;">✏️ Modifier les textes du menu et du pied de page</summary>
+            <div id="ap-common-texts" style="margin-top:14px;"></div>
+          </details>
+        </div>
       </div>
       <div class="ap-preview">
         <div class="ap-preview-bar">
-          <span class="hero-preview-label" style="margin:0;">Aperçu en direct de l'accueil</span>
+          <label class="hero-preview-label" style="margin:0; display:flex; align-items:center; gap:8px;">Aperçu de la page
+            <select id="ap-page" onchange="setPreviewPage(this.value)" style="padding:6px 8px; border:1px solid var(--border); font-family:var(--font-body); font-size:0.8rem; text-transform:none; letter-spacing:0;"></select>
+          </label>
           <div style="display:flex; gap:6px;">
             <button class="preset active" data-device="desktop" onclick="setPreviewDevice('desktop')">🖥 Ordinateur</button>
             <button class="preset" data-device="mobile" onclick="setPreviewDevice('mobile')">📱 Téléphone</button>

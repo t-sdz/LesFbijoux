@@ -23,20 +23,20 @@
     .hero-content.hidden { opacity: 0; }
   </style>
 </head>
-<body>
+<body data-page="accueil">
 
 <nav>
   <a href="index.html" class="nav-logo">Les F Bijoux</a>
   <div class="nav-links">
-    <a href="index.html">Accueil</a>
-    <a href="boutique.html">Boutique</a>
-    <div class="nav-dropdown">
-      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+    <a href="index.html" data-nav="accueil" data-edit="menu.accueil">Accueil</a>
+    <a href="boutique.html" data-nav="boutique" data-edit="menu.boutique">Boutique</a>
+    <div class="nav-dropdown" data-nav="collections">
+      <a href="#" class="nav-dropdown-toggle"><span data-edit="menu.collections">Collections</span> ▾</a>
       <div class="nav-dropdown-menu" id="nav-categories"></div>
     </div>
-    <a href="cart.html">🛍 <span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
-    <a href="login.html" id="nav-login">Connexion</a>
-    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="cart.html" data-nav="panier">🛍 <span data-edit="menu.panier"></span><span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
+    <a href="login.html" id="nav-login" data-nav="compte" data-edit="menu.connexion">Connexion</a>
+    <a href="#" id="nav-logout" data-nav="compte" style="display:none;" onclick="logout()" data-edit="menu.deconnexion">Déconnexion</a>
     <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
   </div>
 </nav>
@@ -55,8 +55,8 @@
 
 <section id="collections" class="bg-blanc" data-block="collections">
   <div class="text-center">
-    <p class="section-label">Explorer</p>
-    <h2 class="section-title">Nos Collections</h2>
+    <p class="section-label" data-edit="accueil.collections.label">Explorer</p>
+    <h2 class="section-title" data-edit="accueil.collections.title">Nos Collections</h2>
   </div>
   <div class="collections-grid" id="collections-grid">
     <p style="font-family:var(--font-body);color:var(--muted);">Chargement...</p>
@@ -65,19 +65,19 @@
 
 <section id="products" class="bg-alt" data-block="products">
   <div class="text-center">
-    <p class="section-label">Sélection</p>
-    <h2 class="section-title">Pièces Favorites</h2>
+    <p class="section-label" data-edit="accueil.products.label">Sélection</p>
+    <h2 class="section-title" data-edit="accueil.products.title">Pièces Favorites</h2>
   </div>
   <div class="products-grid" id="product-list">Chargement...</div>
 </section>
 
 <section class="newsletter" data-block="newsletter">
   <div class="text-center">
-    <h2 class="section-title">Restez Inspiré</h2>
-    <p style="color: var(--muted); margin-bottom: 30px; font-family: var(--font-body);">Inscrivez-vous pour recevoir nos nouveautés et offres exclusives.</p>
+    <h2 class="section-title" data-edit="accueil.newsletter.title">Restez Inspiré</h2>
+    <p style="color: var(--muted); margin-bottom: 30px; font-family: var(--font-body);" data-edit="accueil.newsletter.text">Inscrivez-vous pour recevoir nos nouveautés et offres exclusives.</p>
     <div class="newsletter-form">
       <input type="email" placeholder="Votre adresse email">
-      <button>S'inscrire</button>
+      <button data-edit="accueil.newsletter.button">S'inscrire</button>
     </div>
   </div>
 </section>
@@ -85,9 +85,9 @@
 <footer>
   <div class="footer-grid">
     <div class="footer-brand"><h3>Les F Bijoux</h3><p>Joaillerie d'exception, créée avec amour et savoir-faire artisanal.</p></div>
-    <div class="footer-col"><h4>Boutique</h4><ul><li><a href="boutique.html">Tous les bijoux</a></li><li><a href="collection.html?category=bagues">Bagues</a></li><li><a href="collection.html?category=colliers">Colliers</a></li><li><a href="collection.html?category=bracelets">Bracelets</a></li></ul></div>
-    <div class="footer-col"><h4>À propos</h4><ul><li><a href="#">Notre histoire</a></li><li><a href="#">Savoir-faire</a></li><li><a href="#">Engagement</a></li></ul></div>
-    <div class="footer-col"><h4>Service</h4><ul><li><a href="#">Livraison</a></li><li><a href="#">Retours</a></li><li><a href="#">Contact</a></li><li><a href="#">FAQ</a></li></ul></div>
+    <div class="footer-col" data-footer-col="boutique"><h4 data-edit="footer.boutique">Boutique</h4><ul><li><a href="boutique.html" data-edit="footer.boutique.1">Tous les bijoux</a></li><li><a href="collection.html?category=bagues" data-edit="footer.boutique.2">Bagues</a></li><li><a href="collection.html?category=colliers" data-edit="footer.boutique.3">Colliers</a></li><li><a href="collection.html?category=bracelets" data-edit="footer.boutique.4">Bracelets</a></li></ul></div>
+    <div class="footer-col" data-footer-col="apropos"><h4 data-edit="footer.apropos">À propos</h4><ul><li><a href="#" data-edit="footer.apropos.1">Notre histoire</a></li><li><a href="#" data-edit="footer.apropos.2">Savoir-faire</a></li><li><a href="#" data-edit="footer.apropos.3">Engagement</a></li></ul></div>
+    <div class="footer-col" data-footer-col="service"><h4 data-edit="footer.service">Service</h4><ul><li><a href="#" data-edit="footer.service.1">Livraison</a></li><li><a href="#" data-edit="footer.service.2">Retours</a></li><li><a href="#" data-edit="footer.service.3">Contact</a></li><li><a href="#" data-edit="footer.service.4">FAQ</a></li></ul></div>
   </div>
   <div class="footer-bottom">© 2026 Les F Bijoux. Tous droits réservés.</div>
 </footer>

@@ -36,48 +36,58 @@
     }
   </style>
 </head>
-<body>
+<body data-page="panier">
 
 <nav>
   <a href="index.html" class="nav-logo">Les F Bijoux</a>
   <div class="nav-links">
-    <a href="index.html">Accueil</a>
-    <a href="boutique.html">Boutique</a>
-    <div class="nav-dropdown">
-      <a href="#" class="nav-dropdown-toggle">Collections ▾</a>
+    <a href="index.html" data-nav="accueil" data-edit="menu.accueil">Accueil</a>
+    <a href="boutique.html" data-nav="boutique" data-edit="menu.boutique">Boutique</a>
+    <div class="nav-dropdown" data-nav="collections">
+      <a href="#" class="nav-dropdown-toggle"><span data-edit="menu.collections">Collections</span> ▾</a>
       <div class="nav-dropdown-menu" id="nav-categories"></div>
     </div>
-    <a href="cart.html">🛍 <span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
-    <a href="login.html" id="nav-login">Connexion</a>
-    <a href="#" id="nav-logout" style="display:none;" onclick="logout()">Déconnexion</a>
+    <a href="cart.html" data-nav="panier">🛍 <span data-edit="menu.panier"></span><span id="cart-count" style="display:none; background:var(--gold); color:white; border-radius:50%; padding:1px 6px; font-size:0.7rem;">0</span></a>
+    <a href="login.html" id="nav-login" data-nav="compte" data-edit="menu.connexion">Connexion</a>
+    <a href="#" id="nav-logout" data-nav="compte" style="display:none;" onclick="logout()" data-edit="menu.deconnexion">Déconnexion</a>
     <a href="admin.html" id="nav-admin" style="display:none; color:var(--gold);">⚙ Admin</a>
   </div>
 </nav>
 
 <section style="padding-top:120px; min-height:100vh;">
   <div style="max-width:900px; margin:0 auto; padding:0 40px;">
-    <p class="section-label">Mon compte</p>
-    <h2 class="section-title">Mon Panier</h2>
+    <p class="section-label" data-edit="panier.label">Mon compte</p>
+    <h2 class="section-title" data-edit="panier.title">Mon Panier</h2>
 
     <div id="cart-container"></div>
 
     <div id="total-section" style="display:none;">
       <div class="cart-summary">
-        <p style="font-family:var(--font-body); font-size:0.85rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;">Total</p>
+        <p style="font-family:var(--font-body); font-size:0.85rem; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.1em;" data-edit="panier.total">Total</p>
         <p id="total-price" style="font-family:var(--font-title); font-size:2rem; color:var(--foreground); margin-bottom:8px;"></p>
-        <p style="font-family:var(--font-body); font-size:0.78rem; color:var(--muted); margin-bottom:24px;">Livraison gratuite · Paiement sécurisé</p>
-        <button class="btn-primary" style="width:100%; text-align:center; border:none; cursor:pointer;" onclick="checkout()">
+        <p style="font-family:var(--font-body); font-size:0.78rem; color:var(--muted); margin-bottom:24px;" data-edit="panier.info">Livraison gratuite · Paiement sécurisé</p>
+        <button class="btn-primary" style="width:100%; text-align:center; border:none; cursor:pointer;" onclick="checkout()" data-edit="panier.pay">
           Payer maintenant
         </button>
       </div>
     </div>
 
     <a href="boutique.html" style="display:inline-block; margin-top:30px; font-size:0.8rem; color:var(--gold); text-decoration:none; font-family:var(--font-body); letter-spacing:0.1em;">
-      ← Continuer mes achats
+      <span data-edit="panier.continue">← Continuer mes achats</span>
     </a>
   </div>
 </section>
 
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand"><h3>Les F Bijoux</h3><p>Joaillerie d'exception, créée avec amour et savoir-faire artisanal.</p></div>
+    <div class="footer-col" data-footer-col="boutique"><h4 data-edit="footer.boutique">Boutique</h4><ul><li><a href="boutique.html" data-edit="footer.boutique.1">Tous les bijoux</a></li><li><a href="collection.html?category=bagues" data-edit="footer.boutique.2">Bagues</a></li><li><a href="collection.html?category=colliers" data-edit="footer.boutique.3">Colliers</a></li><li><a href="collection.html?category=bracelets" data-edit="footer.boutique.4">Bracelets</a></li></ul></div>
+    <div class="footer-col" data-footer-col="apropos"><h4 data-edit="footer.apropos">À propos</h4><ul><li><a href="#" data-edit="footer.apropos.1">Notre histoire</a></li><li><a href="#" data-edit="footer.apropos.2">Savoir-faire</a></li><li><a href="#" data-edit="footer.apropos.3">Engagement</a></li></ul></div>
+    <div class="footer-col" data-footer-col="service"><h4 data-edit="footer.service">Service</h4><ul><li><a href="#" data-edit="footer.service.1">Livraison</a></li><li><a href="#" data-edit="footer.service.2">Retours</a></li><li><a href="#" data-edit="footer.service.3">Contact</a></li><li><a href="#" data-edit="footer.service.4">FAQ</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">© 2026 Les F Bijoux. Tous droits réservés.</div>
+</footer>
 <script>
 async function loadCart() {
   const res = await fetch('/cart', { credentials: 'include' });

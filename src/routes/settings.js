@@ -11,6 +11,7 @@ router.get('/', async (req, res) => {
             settings: await settingsService.getSettings(),
             defaults: settingsService.DEFAULTS,
             fonts: await settingsService.getFontOptions(),
+            catalog: settingsService.TEXT_CATALOG,
         });
     } catch (err) {
         res.status(500).json({ error: 'Erreur serveur' });
